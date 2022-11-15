@@ -53,23 +53,23 @@ public class SwerveModule {
   /**
    * Constructs a SwerveModule with a drive motor, turning motor, drive encoder and turning encoder.
    *
-   * @param driveMotorChannel PWM output for the drive motor.
-   * @param turningMotorChannel PWM output for the turning motor.
+   * @param driveMotorCanId PWM output for the drive motor.
+   * @param turningMotorCanId PWM output for the turning motor.
    * @param driveEncoderChannelA DIO input for the drive encoder channel A
    * @param driveEncoderChannelB DIO input for the drive encoder channel B
    * @param turningEncoderChannelA DIO input for the turning encoder channel A
    * @param turningEncoderChannelB DIO input for the turning encoder channel B
    */
   public SwerveModule(
-      int driveMotorChannel,
-      int turningMotorChannel,
+      int driveMotorCanId,
+      int turningMotorCanId,
       int driveEncoderChannelA,
       int driveEncoderChannelB,
       int turningEncoderChannelA,
       int turningEncoderChannelB) {
 
-    m_driveMotor = new TalonSRX(driveMotorChannel);
-    m_turningMotor = new VictorSPX(turningMotorChannel);
+    m_driveMotor = new TalonSRX(driveMotorCanId);
+    m_turningMotor = new VictorSPX(turningMotorCanId);
 
     m_driveEncoder = new Encoder(driveEncoderChannelA, driveEncoderChannelB);
     m_turningEncoder = new Encoder(turningEncoderChannelA, turningEncoderChannelB);
