@@ -22,7 +22,8 @@ import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
 
 public class SwerveModule {
   private static final double kWheelRadius = 0.0508;
-  private static final int kEncoderResolution = 4096;
+  private static final int kSteerEncoderResolution = 7;  // Originally 4096
+  private static final int kDriveEncoderResolution = 1; // NOT USED!
 
   private static final double kModuleMaxAngularVelocity = Drivetrain.kMaxAngularSpeed;
   private static final double kModuleMaxAngularAcceleration =
@@ -77,12 +78,12 @@ public class SwerveModule {
     // Set the distance per pulse for the drive encoder. We can simply use the
     // distance traveled for one rotation of the wheel divided by the encoder
     // resolution.
-    m_driveEncoder.setDistancePerPulse(2 * Math.PI * kWheelRadius / kEncoderResolution);
+    //m_driveEncoder.setDistancePerPulse(2 * Math.PI * kWheelRadius / kDriveEncoderResolution);
 
     // Set the distance (in this case, angle) per pulse for the turning encoder.
     // This is the the angle through an entire rotation (2 * pi) divided by the
     // encoder resolution.
-    m_turningEncoder.setDistancePerPulse(2 * Math.PI / kEncoderResolution);
+    m_turningEncoder.setDistancePerPulse(2 * Math.PI / kSteerEncoderResolution);
 
     // Limit the PID Controller's input range between -pi and pi and set the input
     // to be continuous.
@@ -94,9 +95,9 @@ public class SwerveModule {
    *
    * @return The current state of the module.
    */
-  public SwerveModuleState getState() {
-    return new SwerveModuleState(m_driveEncoder.getRate(), new Rotation2d(m_turningEncoder.get()));
-  }
+  // public SwerveModuleState getState() {
+  //   return new SwerveModuleState(m_driveEncoder.getRate(), new Rotation2d(m_turningEncoder.get()));
+  // }
 
   /**
    * Sets the desired state for the module.
@@ -109,10 +110,21 @@ public class SwerveModule {
         SwerveModuleState.optimize(desiredState, new Rotation2d(m_turningEncoder.get()));
 
     // Calculate the drive output from the drive PID controller.
-    final double driveOutput =
-        m_drivePIDController.calculate(m_driveEncoder.getRate(), state.speedMetersPerSecond);
+    // This applies PID control, but also effectively changes m/s into % output
+    // final double driveOutput =
+    //     m_drivePIDController.calculate(m_driveEncoder.getRate(), state.speedMetersPerSecond);
 
-    final double driveFeedforward = m_driveFeedforward.calculate(state.speedMetersPerSecond);
+    // For now, without drive encoders, just use the input desired speed as the output speed
+    // Need to find what the max revs and gear ratio result in max speed
+    // The am-0255 CIM Motor has a max speed of 5310 RPM
+    // Gear ratio on the Swerve & Steer is 6.67:1
+    // Wheel diameter is 4" (0.1016 m)
+    // Max speed = 5310 RPM X 1m/60sec X 1/6.67 X  0.1016*3.1415m/1 rev = 4.23 m/s
+    // So, drive output of 1.0 equals a desired speed of 4.23m/s
+    final double driveOutput = state.speedMetersPerSecond / 4.23;
+
+
+//    final double driveFeedforward = m_driveFeedforward.calculate(state.speedMetersPerSecond);
 
     // Calculate the turning motor output from the turning PID controller.
     final double turnOutput =
@@ -121,7 +133,10 @@ public class SwerveModule {
     final double turnFeedforward =
         m_turnFeedforward.calculate(m_turningPIDController.getSetpoint().velocity);
 
-    m_driveMotor.set(ControlMode.PercentOutput, driveOutput + driveFeedforward);
+    // m_driveMotor.set(ControlMode.PercentOutput, driveOutput + driveFeedforward);
+
+    // for now, just use the linear conversion from m/s to percent output
+    m_driveMotor.set(ControlMode.PercentOutput, driveOutput);
     m_turningMotor.set(ControlMode.PercentOutput,  turnOutput + turnFeedforward);
   }
 }

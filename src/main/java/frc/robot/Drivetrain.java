@@ -66,12 +66,12 @@ float y = 0.22225f;
   }
 
   /** Updates the field relative position of the robot. */
-  public void updateOdometry() {
-    m_odometry.update(
-        m_gyro.getRotation2d(),
-        m_frontLeft.getState(),
-        m_frontRight.getState(),
-        m_backLeft.getState(),
-        m_backRight.getState());
-  }
+  // public void updateOdometry() {
+  //   m_odometry.update(
+  //       m_gyro.getRotation2d(),
+  //       m_frontLeft.getState(),
+  //       m_frontRight.getState(),
+  //       m_backLeft.getState(),
+  //       m_backRight.getState());
+  // }
 }
