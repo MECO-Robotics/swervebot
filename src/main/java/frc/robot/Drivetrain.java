@@ -15,26 +15,29 @@ public class Drivetrain {
   public static final double kMaxSpeed = 3.0; // 3 meters per second
   public static final double kMaxAngularSpeed = Math.PI; // 1/2 rotation per second
 
-float x = 0.2365375f;
-float y = 0.22225f;
+  // Offset lengths from the center to the wheels
+  // Robot orientation is x forward, y left
+  float x = 0.2365375f;
+  float y = 0.22225f;
 
-
-
-  private final Translation2d m_frontLeftLocation = new Translation2d(x, y);
+  // Rivet's convention is we start from the front right swerve module and go clockwise from there
+  // for Encoder inputs and CAN IDs
   private final Translation2d m_frontRightLocation = new Translation2d(x, -y);
-  private final Translation2d m_backLeftLocation = new Translation2d(-x, y);
   private final Translation2d m_backRightLocation = new Translation2d(-x, -y);
+  private final Translation2d m_backLeftLocation = new Translation2d(-x, y);
+  private final Translation2d m_frontLeftLocation = new Translation2d(x, y);
 
-  private final SwerveModule m_frontLeft = new SwerveModule(1, 2, 0, 1, 2, 3);
-  private final SwerveModule m_frontRight = new SwerveModule(3, 4, 4, 5, 6, 7);
-  private final SwerveModule m_backLeft = new SwerveModule(5, 6, 8, 9, 10, 11);
-  private final SwerveModule m_backRight = new SwerveModule(7, 8, 12, 13, 14, 15);
+  private final SwerveModule m_frontRight = new SwerveModule(1, 2, -1, -1, 0, 1);
+  private final SwerveModule m_backRight = new SwerveModule(3, 4, -1, -1, 2, 3);
+  private final SwerveModule m_backLeft = new SwerveModule(5, 6, -1, -1, 4, 5);
+  private final SwerveModule m_frontLeft = new SwerveModule(7, 8, -1, -1, 6, 7);
 
   private final AnalogGyro m_gyro = new AnalogGyro(0);
 
+  // Order of modules starts at front right and goes clockwise
   private final SwerveDriveKinematics m_kinematics =
       new SwerveDriveKinematics(
-          m_frontLeftLocation, m_frontRightLocation, m_backLeftLocation, m_backRightLocation);
+        m_frontRightLocation, m_backRightLocation, m_backLeftLocation, m_frontLeftLocation);
 
   private final SwerveDriveOdometry m_odometry =
       new SwerveDriveOdometry(m_kinematics, m_gyro.getRotation2d());
@@ -59,10 +62,10 @@ float y = 0.22225f;
                 ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, m_gyro.getRotation2d())
                 : new ChassisSpeeds(xSpeed, ySpeed, rot));
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, kMaxSpeed);
-    m_frontLeft.setDesiredState(swerveModuleStates[0]);
-    m_frontRight.setDesiredState(swerveModuleStates[1]);
+    m_frontRight.setDesiredState(swerveModuleStates[0]);
+    m_backRight.setDesiredState(swerveModuleStates[1]);
     m_backLeft.setDesiredState(swerveModuleStates[2]);
-    m_backRight.setDesiredState(swerveModuleStates[3]);
+    m_frontLeft.setDesiredState(swerveModuleStates[3]);
   }
 
   /** Updates the field relative position of the robot. */
@@ -74,4 +77,8 @@ float y = 0.22225f;
   //       m_backLeft.getState(),
   //       m_backRight.getState());
   // }
+
+  public void control(int swerveModule, double drive, double rot) {
+    
+  }
 }
