@@ -29,7 +29,7 @@ public class SwerveModule {
     private final IMotorControllerEnhanced m_driveMotor;
     private final IMotorController m_turningMotor;
 
-    private final Encoder m_driveEncoder;
+    private final Encoder m_driveEncoder = null;
     private final Encoder m_turningEncoder;
 
     // Gains are for example purposes only - must be determined for your own robot!
@@ -71,7 +71,7 @@ public class SwerveModule {
         m_driveMotor = new TalonSRX(driveMotorCanId);
         m_turningMotor = new VictorSPX(turningMotorCanId);
 
-        m_driveEncoder = new Encoder(driveEncoderChannelA, driveEncoderChannelB);
+       // m_driveEncoder = new Encoder(driveEncoderChannelA, driveEncoderChannelB);
         m_turningEncoder = new Encoder(turningEncoderChannelA, turningEncoderChannelB);
 
         // Set the distance per pulse for the drive encoder. We can simply use the
@@ -150,4 +150,27 @@ public class SwerveModule {
         m_driveMotor.set(ControlMode.PercentOutput, drive);
         m_turningMotor.set(ControlMode.PercentOutput, turn);
     }
+
+    public Encoder getEncoder() {
+       return m_turningEncoder;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
+
+
+
+

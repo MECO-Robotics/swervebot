@@ -33,31 +33,81 @@ public class Robot extends TimedRobot {
   // --------------------------------------------------------------------------
   // Test Mode
 
+  double drive = 0;
+  double turn = 0;
+
   @Override
   public void testInit() {
 
   }
+
   int module;
+
   @Override
   public void testPeriodic() {
    
-
+    // controls for selecting which swerve module you are testing
     if (m_controller.getYButton()) {
+      drive = 0;
+      turn = 0;
+      m_swerve.control(module, drive, turn);
       module = 0;
     }
+
     if (m_controller.getBButton()) {
+      drive = 0;
+      turn = 0;
+      m_swerve.control(module, drive, turn);
       module = 1;
     }
 
     if (m_controller.getAButton()) {
+      drive = 0;
+      turn = 0;
+      m_swerve.control(module, drive, turn);
       module = 2;
     }
 
     if (m_controller.getXButton()) {
+      drive = 0;
+      turn = 0;
+      m_swerve.control(module, drive, turn);
       module = 3;
     }
-    m_controller.getLeftX();
-    m_controller.getRightY();
+   
+ 
+ // controls for increasing speed and turn
+    
+    if (m_controller.getPOV() == 0)  {
+      // increase drive by .1
+      drive = drive + 0.1;
+    }
+    
+    if (m_controller.getPOV() == 90)  {
+      // increase turn by .1
+      turn = turn + 0.1;
+    }
+    
+    if (m_controller.getPOV() == 180)  {
+      // decrease drive by .1
+      drive = drive - 0.1;
+    }
+
+    if (m_controller.getPOV() == 270)  {
+      //decrease turn by .1
+      turn = turn - 0.1;
+    }
+    
+   //allows for control of the swerve modules
+    m_swerve.control(module, drive, turn);
+
+    
+
+
+
+
+    
+    
   }
 
   @Override

@@ -11,11 +11,16 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.AnalogGyro;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /** Represents a swerve drive style drivetrain. */
-public class Drivetrain {
+public class Drivetrain extends SubsystemBase{
   public static final double kMaxSpeed = 3.0; // 3 meters per second
   public static final double kMaxAngularSpeed = Math.PI; // 1/2 rotation per second
+
+
+
+
 
   // Offset lengths from the center to the wheels
   // Robot orientation is x forward, y left
@@ -44,6 +49,10 @@ public class Drivetrain {
   private final SwerveDriveOdometry m_odometry = new SwerveDriveOdometry(m_kinematics, m_gyro.getRotation2d());
 
   public Drivetrain() {
+    addChild("Front Right Turn", m_frontRight.getEncoder());
+    addChild("Back Right Turn", m_backRight.getEncoder());
+    addChild("Back Left Turn", m_backLeft.getEncoder());
+    addChild("Front Left Turn", m_frontLeft.getEncoder());
     m_gyro.reset();
   }
 
@@ -79,7 +88,7 @@ public class Drivetrain {
   // m_backRight.getState());
   // }
 
-  public void control(int SwerveModuleNumber, double drive, Rotation2d rot) {
+  public void control(int SwerveModuleNumber, double drive, double rot) {
     SwerveModule currentswervemodule;
     currentswervemodule = null;
 
@@ -96,13 +105,10 @@ public class Drivetrain {
     }
 
     if (SwerveModuleNumber == 3) {
-      currentswervemodule = m_frontRight;
+      currentswervemodule = m_frontLeft;
     }
-    SwerveModuleState desiredState;
-    desiredState = new SwerveModuleState();
-    desiredState.angle = rot;
-    desiredState.speedMetersPerSecond = drive;
-    currentswervemodule.setDesiredState(desiredState);
+
+    currentswervemodule.rawInput(drive, rot);
 
   }
 
