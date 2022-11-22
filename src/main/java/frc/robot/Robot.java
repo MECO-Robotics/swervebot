@@ -19,39 +19,55 @@ public class Robot extends TimedRobot {
   private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3);
 
   // --------------------------------------------------------------------------
-  //      Autonomous
+  // Autonomous
 
   @Override
   public void autonomousPeriodic() {
 
     // Can't do autonomous right now because we don't have drive encoders
-    
+
     // driveWithJoystick(false);
     // m_swerve.updateOdometry();
   }
 
   // --------------------------------------------------------------------------
-  //      Test Mode
+  // Test Mode
 
   @Override
   public void testInit() {
 
   }
-  
+  int module;
   @Override
   public void testPeriodic() {
+   
 
+    if (m_controller.getYButton()) {
+      module = 0;
+    }
+    if (m_controller.getBButton()) {
+      module = 1;
+    }
+
+    if (m_controller.getAButton()) {
+      module = 2;
+    }
+
+    if (m_controller.getXButton()) {
+      module = 3;
+    }
+    m_controller.getLeftX();
+    m_controller.getRightY();
   }
 
   @Override
   public void testExit() {
 
   }
-  
-  // --------------------------------------------------------------------------
-  //      Teleop
 
-  
+  // --------------------------------------------------------------------------
+  // Teleop
+
   @Override
   public void teleopPeriodic() {
     driveWithJoystick(true);
@@ -60,24 +76,21 @@ public class Robot extends TimedRobot {
   private void driveWithJoystick(boolean fieldRelative) {
     // Get the x speed. We are inverting this because Xbox controllers return
     // negative values when we push forward.
-    final var xSpeed =
-        -m_xspeedLimiter.calculate(MathUtil.applyDeadband(m_controller.getLeftY(), 0.02))
-            * Drivetrain.kMaxSpeed;
+    final var xSpeed = -m_xspeedLimiter.calculate(MathUtil.applyDeadband(m_controller.getLeftY(), 0.02))
+        * Drivetrain.kMaxSpeed;
 
     // Get the y speed or sideways/strafe speed. We are inverting this because
     // we want a positive value when we pull to the left. Xbox controllers
     // return positive values when you pull to the right by default.
-    final var ySpeed =
-        -m_yspeedLimiter.calculate(MathUtil.applyDeadband(m_controller.getLeftX(), 0.02))
-            * Drivetrain.kMaxSpeed;
+    final var ySpeed = -m_yspeedLimiter.calculate(MathUtil.applyDeadband(m_controller.getLeftX(), 0.02))
+        * Drivetrain.kMaxSpeed;
 
     // Get the rate of angular rotation. We are inverting this because we want a
     // positive value when we pull to the left (remember, CCW is positive in
     // mathematics). Xbox controllers return positive values when you pull to
     // the right by default.
-    final var rot =
-        -m_rotLimiter.calculate(MathUtil.applyDeadband(m_controller.getRightX(), 0.02))
-            * Drivetrain.kMaxAngularSpeed;
+    final var rot = -m_rotLimiter.calculate(MathUtil.applyDeadband(m_controller.getRightX(), 0.02))
+        * Drivetrain.kMaxAngularSpeed;
 
     m_swerve.drive(xSpeed, ySpeed, rot, fieldRelative);
   }

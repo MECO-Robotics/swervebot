@@ -4,10 +4,12 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.AnalogGyro;
 
 /** Represents a swerve drive style drivetrain. */
@@ -20,7 +22,8 @@ public class Drivetrain {
   float x = 0.2365375f;
   float y = 0.22225f;
 
-  // Rivet's convention is we start from the front right swerve module and go clockwise from there
+  // Rivet's convention is we start from the front right swerve module and go
+  // clockwise from there
   // for Encoder inputs and CAN IDs
   private final Translation2d m_frontRightLocation = new Translation2d(x, -y);
   private final Translation2d m_backRightLocation = new Translation2d(-x, -y);
@@ -35,12 +38,10 @@ public class Drivetrain {
   private final AnalogGyro m_gyro = new AnalogGyro(0);
 
   // Order of modules starts at front right and goes clockwise
-  private final SwerveDriveKinematics m_kinematics =
-      new SwerveDriveKinematics(
-        m_frontRightLocation, m_backRightLocation, m_backLeftLocation, m_frontLeftLocation);
+  private final SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(
+      m_frontRightLocation, m_backRightLocation, m_backLeftLocation, m_frontLeftLocation);
 
-  private final SwerveDriveOdometry m_odometry =
-      new SwerveDriveOdometry(m_kinematics, m_gyro.getRotation2d());
+  private final SwerveDriveOdometry m_odometry = new SwerveDriveOdometry(m_kinematics, m_gyro.getRotation2d());
 
   public Drivetrain() {
     m_gyro.reset();
@@ -49,18 +50,18 @@ public class Drivetrain {
   /**
    * Method to drive the robot using joystick info.
    *
-   * @param xSpeed Speed of the robot in the x direction (forward).
-   * @param ySpeed Speed of the robot in the y direction (sideways).
-   * @param rot Angular rate of the robot.
-   * @param fieldRelative Whether the provided x and y speeds are relative to the field.
+   * @param xSpeed        Speed of the robot in the x direction (forward).
+   * @param ySpeed        Speed of the robot in the y direction (sideways).
+   * @param rot           Angular rate of the robot.
+   * @param fieldRelative Whether the provided x and y speeds are relative to the
+   *                      field.
    */
   @SuppressWarnings("ParameterName")
   public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
-    var swerveModuleStates =
-        m_kinematics.toSwerveModuleStates(
-            fieldRelative
-                ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, m_gyro.getRotation2d())
-                : new ChassisSpeeds(xSpeed, ySpeed, rot));
+    var swerveModuleStates = m_kinematics.toSwerveModuleStates(
+        fieldRelative
+            ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, m_gyro.getRotation2d())
+            : new ChassisSpeeds(xSpeed, ySpeed, rot));
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, kMaxSpeed);
     m_frontRight.setDesiredState(swerveModuleStates[0]);
     m_backRight.setDesiredState(swerveModuleStates[1]);
@@ -70,15 +71,39 @@ public class Drivetrain {
 
   /** Updates the field relative position of the robot. */
   // public void updateOdometry() {
-  //   m_odometry.update(
-  //       m_gyro.getRotation2d(),
-  //       m_frontLeft.getState(),
-  //       m_frontRight.getState(),
-  //       m_backLeft.getState(),
-  //       m_backRight.getState());
+  // m_odometry.update(
+  // m_gyro.getRotation2d(),
+  // m_frontLeft.getState(),
+  // m_frontRight.getState(),
+  // m_backLeft.getState(),
+  // m_backRight.getState());
   // }
 
-  public void control(int swerveModule, double drive, double rot) {
-    
+  public void control(int SwerveModuleNumber, double drive, Rotation2d rot) {
+    SwerveModule currentswervemodule;
+    currentswervemodule = null;
+
+    if (SwerveModuleNumber == 0) {
+      currentswervemodule = m_frontRight;
+    }
+
+    if (SwerveModuleNumber == 1) {
+      currentswervemodule = m_backRight;
+    }
+
+    if (SwerveModuleNumber == 2) {
+      currentswervemodule = m_backLeft;
+    }
+
+    if (SwerveModuleNumber == 3) {
+      currentswervemodule = m_frontRight;
+    }
+    SwerveModuleState desiredState;
+    desiredState = new SwerveModuleState();
+    desiredState.angle = rot;
+    desiredState.speedMetersPerSecond = drive;
+    currentswervemodule.setDesiredState(desiredState);
+
   }
+
 }
