@@ -49,10 +49,10 @@ public class Drivetrain extends SubsystemBase{
   private final SwerveDriveOdometry m_odometry = new SwerveDriveOdometry(m_kinematics, m_gyro.getRotation2d());
 
   public Drivetrain() {
-    addChild("Front Right Turn", m_frontRight.getEncoder());
-    addChild("Back Right Turn", m_backRight.getEncoder());
-    addChild("Back Left Turn", m_backLeft.getEncoder());
-    addChild("Front Left Turn", m_frontLeft.getEncoder());
+    addChild("Front Right Turn", m_frontRight.getTurnEncoder());
+    addChild("Back Right Turn", m_backRight.getTurnEncoder());
+    addChild("Back Left Turn", m_backLeft.getTurnEncoder());
+    addChild("Front Left Turn", m_frontLeft.getTurnEncoder());
     m_gyro.reset();
   }
 

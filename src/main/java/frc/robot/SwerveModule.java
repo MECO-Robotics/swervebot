@@ -29,7 +29,7 @@ public class SwerveModule {
     private final IMotorControllerEnhanced m_driveMotor;
     private final IMotorController m_turningMotor;
 
-    private final Encoder m_driveEncoder = null;
+    private final Encoder m_driveEncoder = null;        // not using drive encoders (yet)
     private final Encoder m_turningEncoder;
 
     // Gains are for example purposes only - must be determined for your own robot!
@@ -146,12 +146,22 @@ public class SwerveModule {
 
     // --------------------------------------------------------------------------
 
+    /**
+     * Direct control of the swerve module motors, regardless of current state 
+     * @param drive The input level -1.0 to 1.0 for the driver motor
+     * @param turn The input level -1.0 to 1.0 for the steer motor
+     */
     public void rawInput(double drive, double turn) {
         m_driveMotor.set(ControlMode.PercentOutput, drive);
         m_turningMotor.set(ControlMode.PercentOutput, turn);
     }
 
-    public Encoder getEncoder() {
+    // --------------------------------------------------------------------------
+
+    /**
+     * Get the turning encoder
+     */
+    public Encoder getTurnEncoder() {
        return m_turningEncoder;
     }
 
