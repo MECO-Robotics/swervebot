@@ -46,10 +46,10 @@ public class Drivetrain extends SubsystemBase {
   private final SwerveDriveOdometry m_odometry = new SwerveDriveOdometry(m_kinematics, m_gyro.getRotation2d());
 
   public Drivetrain() {
-    addChild("Front Right Turn", m_frontRight.getEncoder());
-    addChild("Back Right Turn", m_backRight.getEncoder());
-    addChild("Back Left Turn", m_backLeft.getEncoder());
-    addChild("Front Left Turn", m_frontLeft.getEncoder());
+    addChild("Front Right Turn", m_frontRight.getTurnEncoder());
+    addChild("Back Right Turn", m_backRight.getTurnEncoder());
+    addChild("Back Left Turn", m_backLeft.getTurnEncoder());
+    addChild("Front Left Turn", m_frontLeft.getTurnEncoder());
     m_gyro.reset();
   }
 
@@ -64,10 +64,17 @@ public class Drivetrain extends SubsystemBase {
    */
   @SuppressWarnings("ParameterName")
   public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
-    var swerveModuleStates = m_kinematics.toSwerveModuleStates(
-        fieldRelative
-            ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, m_gyro.getRotation2d())
-            : new ChassisSpeeds(xSpeed, ySpeed, rot));
+
+    ChassisSpeeds chassisSpeeds = null;
+    if(fieldRelative) {
+      chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, m_gyro.getRotation2d());
+    }
+    else{
+      chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, rot);
+    }
+
+    SwerveModuleState[] swerveModuleStates = m_kinematics.toSwerveModuleStates(chassisSpeeds);
+
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, kMaxSpeed);
     m_frontRight.setDesiredState(swerveModuleStates[0]);
     m_backRight.setDesiredState(swerveModuleStates[1]);
