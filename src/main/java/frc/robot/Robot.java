@@ -107,17 +107,17 @@ public class Robot extends TimedRobot {
 
         if (m_controller.getPOV() == 90) {
             // increase turn by .1
-            turn = turn + 0.1;
+            turn = turn + 0.05;
         }
 
         if (m_controller.getPOV() == 180) {
             // decrease drive by .1
-            drive = drive - 0.1;
+            drive = drive - 0.01;
         }
 
         if (m_controller.getPOV() == 270) {
             // decrease turn by .1
-            turn = turn - 0.1;
+            turn = turn - 0.05;
         }
 
         // allows for control of the swerve modules

@@ -20,7 +20,7 @@ import edu.wpi.first.wpilibj.Encoder;
 
 public class SwerveModule {
     private static final double kWheelRadius = 0.0508; // 4" wheels in meters
-    private static final int kSteerEncoderResolution = 1600; // Originally 4096
+    private static final int kSteerEncoderResolution = 1660; // Originally 4096
     private static final int kDriveEncoderResolution = 1; // NOT USED!
 
     private static final double kModuleMaxAngularVelocity = Drivetrain.kMaxAngularSpeed;
@@ -120,6 +120,7 @@ public class SwerveModule {
      * @param desiredState Desired state with speed and angle.
      */
     public void setDesiredState(SwerveModuleState desiredState) {
+        System.out.println(desiredState);
         // Optimize the reference state to avoid spinning further than 90 degrees
         SwerveModuleState state = SwerveModuleState.optimize(desiredState, new Rotation2d(m_turningEncoder.get()));
 
@@ -137,10 +138,13 @@ public class SwerveModule {
         // Wheel diameter is 4" (0.1016 m)
         // Max speed = 5310 RPM X 1m/60sec X 1/6.67 X 0.1016*3.1415m/1 rev = 4.23 m/s
         // So, drive output of 1.0 equals a desired speed of 4.23m/s
+
         final double driveOutput = state.speedMetersPerSecond / 4.23;
 
-        // For now, leaving out the feedforward since it relies on knowing the current speed, which we don't have
-        // final double driveFeedforward = m_driveFeedforward.calculate(state.speedMetersPerSecond);
+        // For now, leaving out the feedforward since it relies on knowing the current
+        // speed, which we don't have
+        // final double driveFeedforward =
+        // m_driveFeedforward.calculate(state.speedMetersPerSecond);
 
         // Calculate the turning motor output from the turning PID controller.
         final double turnOutput = m_turningPIDController.calculate(m_turningEncoder.get(), state.angle.getRadians());
@@ -152,6 +156,8 @@ public class SwerveModule {
         // for now, just use the linear conversion from m/s to percent output
         m_driveMotor.set(ControlMode.PercentOutput, driveOutput);
         m_turningMotor.set(ControlMode.PercentOutput, turnOutput + turnFeedforward);
+        System.out.println(driveOutput);
+        System.out.println(turnOutput + turnFeedforward);
     }
 
     // --------------------------------------------------------------------------
