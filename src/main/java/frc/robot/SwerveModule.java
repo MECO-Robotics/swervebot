@@ -20,7 +20,7 @@ import edu.wpi.first.wpilibj.Encoder;
 
 public class SwerveModule {
     private static final double kWheelRadius = 0.0508;      // 4" wheels in meters
-    private static final int kSteerEncoderResolution = 7; // Originally 4096
+    private static final int kSteerEncoderResolution = 1600; // Originally 4096
     private static final int kDriveEncoderResolution = 1; // NOT USED!
 
     private static final double kModuleMaxAngularVelocity = Drivetrain.kMaxAngularSpeed;

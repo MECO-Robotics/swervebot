@@ -11,16 +11,13 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.AnalogGyro;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /** Represents a swerve drive style drivetrain. */
-public class Drivetrain extends SubsystemBase{
+public class Drivetrain extends SubsystemBase {
   public static final double kMaxSpeed = 3.0; // 3 meters per second
   public static final double kMaxAngularSpeed = Math.PI; // 1/2 rotation per second
-
-
-
-
 
   // Offset lengths from the center to the wheels
   // Robot orientation is x forward, y left
@@ -38,7 +35,7 @@ public class Drivetrain extends SubsystemBase{
   private final SwerveModule m_frontRight = new SwerveModule(1, 2, -1, -1, 0, 1);
   private final SwerveModule m_backRight = new SwerveModule(3, 4, -1, -1, 2, 3);
   private final SwerveModule m_backLeft = new SwerveModule(5, 6, -1, -1, 4, 5);
-  private final SwerveModule m_frontLeft = new SwerveModule(7, 8, -1, -1, 6, 7);
+  private final SwerveModule m_frontLeft = new SwerveModule(7, 8, -1, -1, 8, 9);
 
   private final AnalogGyro m_gyro = new AnalogGyro(0);
 
@@ -109,6 +106,17 @@ public class Drivetrain extends SubsystemBase{
     }
 
     currentswervemodule.rawInput(drive, rot);
+
+  }
+
+  // --------------------------------------------------------------------------
+
+  @Override
+  public void periodic() {
+    SmartDashboard.putNumber("Front Right turn encoder RAW", m_frontRight.getEncoder().getRaw());
+    SmartDashboard.putNumber("Back Right turn encoder RAW", m_backRight.getEncoder().getRaw());
+    SmartDashboard.putNumber("Front Left turn encoder RAW", m_frontLeft.getEncoder().getRaw());
+    SmartDashboard.putNumber("Back Left turn encoder RAW", m_backLeft.getEncoder().getRaw());
 
   }
 
