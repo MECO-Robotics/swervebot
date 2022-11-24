@@ -120,10 +120,10 @@ public class Drivetrain extends SubsystemBase {
 
   @Override
   public void periodic() {
-    SmartDashboard.putNumber("Front Right turn encoder RAW", m_frontRight.getEncoder().getRaw());
-    SmartDashboard.putNumber("Back Right turn encoder RAW", m_backRight.getEncoder().getRaw());
-    SmartDashboard.putNumber("Front Left turn encoder RAW", m_frontLeft.getEncoder().getRaw());
-    SmartDashboard.putNumber("Back Left turn encoder RAW", m_backLeft.getEncoder().getRaw());
+    SmartDashboard.putNumber("Front Right turn encoder RAW", m_frontRight.getTurnEncoder().getRaw());
+    SmartDashboard.putNumber("Back Right turn encoder RAW", m_backRight.getTurnEncoder().getRaw());
+    SmartDashboard.putNumber("Front Left turn encoder RAW", m_frontLeft.getTurnEncoder().getRaw());
+    SmartDashboard.putNumber("Back Left turn encoder RAW", m_backLeft.getTurnEncoder().getRaw());
 
   }
 
