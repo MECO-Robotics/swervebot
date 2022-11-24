@@ -123,6 +123,9 @@ public class Robot extends TimedRobot {
         // allows for control of the swerve modules
         m_driveTrain.control(module, drive, turn);
 
+        if(m_controller.getStartButtonPressed()){
+            
+        }
     }
 
     @Override
