@@ -60,6 +60,7 @@ public class TestPatternCommand extends CommandBase {
      */
     @Override
     public void end(boolean interrupted) {
+        m_driveTrain.drive(0, 0, 0, false);
     }
 
     /**

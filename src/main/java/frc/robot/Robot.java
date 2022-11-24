@@ -17,6 +17,8 @@ public class Robot extends TimedRobot {
 
     private final Drivetrain m_driveTrain = new Drivetrain();
 
+    private final TestPatternCommand m_TestPatternCommand = new TestPatternCommand(m_driveTrain);
+
     // Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
     private final SlewRateLimiter m_xspeedLimiter = new SlewRateLimiter(3);
     private final SlewRateLimiter m_yspeedLimiter = new SlewRateLimiter(3);
@@ -32,10 +34,11 @@ public class Robot extends TimedRobot {
     // Autonomous Mode
 
     @Override
-    public void autonomousInit(){
-        // If we're coming from disabled, then the command scheduler is disable. Re-enable it.
+    public void autonomousInit() {
+        // If we're coming from disabled, then the command scheduler is disable.
+        // Re-enable it.
         CommandScheduler.getInstance().enable();
-        
+
         CommandScheduler.getInstance().cancelAll();
     }
 
@@ -57,7 +60,8 @@ public class Robot extends TimedRobot {
     @Override
     public void testInit() {
 
-        // If we're coming from disabled, then the command scheduler is disable. Re-enable it.
+        // If we're coming from disabled, then the command scheduler is disable.
+        // Re-enable it.
         CommandScheduler.getInstance().enable();
 
         // Cancels all running commands at the start of test mode.
@@ -123,8 +127,12 @@ public class Robot extends TimedRobot {
         // allows for control of the swerve modules
         m_driveTrain.control(module, drive, turn);
 
-        if(m_controller.getStartButtonPressed()){
-            
+        if (m_controller.getStartButtonPressed()) {
+
+            if (!CommandScheduler.getInstance().isScheduled(m_TestPatternCommand)) {
+
+                CommandScheduler.getInstance().schedule(m_TestPatternCommand);
+            }
         }
     }
 
