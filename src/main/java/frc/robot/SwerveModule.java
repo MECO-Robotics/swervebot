@@ -19,7 +19,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Encoder;
 
 public class SwerveModule {
-    private static final double kWheelRadius = 0.0508;      // 4" wheels in meters
+    private static final double kWheelRadius = 0.0508; // 4" wheels in meters
     private static final int kSteerEncoderResolution = 1600; // Originally 4096
     private static final int kDriveEncoderResolution = 1; // NOT USED!
 
@@ -29,7 +29,7 @@ public class SwerveModule {
     private final IMotorControllerEnhanced m_driveMotor;
     private final IMotorController m_turningMotor;
 
-    private final Encoder m_driveEncoder = null;        // not using drive encoders (yet)
+    private final Encoder m_driveEncoder = null; // not using drive encoders (yet)
     private final Encoder m_turningEncoder;
 
     // Gains are for example purposes only - must be determined for your own robot!
@@ -71,15 +71,12 @@ public class SwerveModule {
         m_driveMotor = new TalonSRX(driveMotorCanId);
         m_turningMotor = new VictorSPX(turningMotorCanId);
 
-       // m_driveEncoder = new Encoder(driveEncoderChannelA, driveEncoderChannelB);
+        //
+        // Setup the Turning Encoder
+        //
+
         m_turningEncoder = new Encoder(turningEncoderChannelA, turningEncoderChannelB);
         m_turningEncoder.setReverseDirection(true);
-
-        // Set the distance per pulse for the drive encoder. We can simply use the
-        // distance traveled for one rotation of the wheel divided by the encoder
-        // resolution.
-        // m_driveEncoder.setDistancePerPulse(2 * Math.PI * kWheelRadius /
-        // kDriveEncoderResolution);
 
         // Set the distance (in this case, angle) per pulse for the turning encoder.
         // This is the the angle through an entire rotation (2 * pi) divided by the
@@ -89,6 +86,18 @@ public class SwerveModule {
         // Limit the PID Controller's input range between -pi and pi and set the input
         // to be continuous.
         m_turningPIDController.enableContinuousInput(-Math.PI, Math.PI);
+
+        //
+        // Setup the Drive Encoder (not currently available)
+        //
+
+        // m_driveEncoder = new Encoder(driveEncoderChannelA, driveEncoderChannelB);
+
+        // Set the distance per pulse for the drive encoder. We can simply use the
+        // distance traveled for one rotation of the wheel divided by the encoder
+        // resolution.
+        // m_driveEncoder.setDistancePerPulse(2 * Math.PI * kWheelRadius /
+        // kDriveEncoderResolution);
     }
 
     // --------------------------------------------------------------------------
@@ -130,8 +139,8 @@ public class SwerveModule {
         // So, drive output of 1.0 equals a desired speed of 4.23m/s
         final double driveOutput = state.speedMetersPerSecond / 4.23;
 
-        // final double driveFeedforward =
-        // m_driveFeedforward.calculate(state.speedMetersPerSecond);
+        // For now, leaving out the feedforward since it relies on knowing the current speed, which we don't have
+        // final double driveFeedforward = m_driveFeedforward.calculate(state.speedMetersPerSecond);
 
         // Calculate the turning motor output from the turning PID controller.
         final double turnOutput = m_turningPIDController.calculate(m_turningEncoder.get(), state.angle.getRadians());
@@ -148,9 +157,10 @@ public class SwerveModule {
     // --------------------------------------------------------------------------
 
     /**
-     * Direct control of the swerve module motors, regardless of current state 
+     * Direct control of the swerve module motors, regardless of current state
+     * 
      * @param drive The input level -1.0 to 1.0 for the driver motor
-     * @param turn The input level -1.0 to 1.0 for the steer motor
+     * @param turn  The input level -1.0 to 1.0 for the steer motor
      */
     public void rawInput(double drive, double turn) {
         m_driveMotor.set(ControlMode.PercentOutput, drive);
@@ -163,25 +173,7 @@ public class SwerveModule {
      * Get the turning encoder
      */
     public Encoder getTurnEncoder() {
-       return m_turningEncoder;
+        return m_turningEncoder;
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
-
-
-
-

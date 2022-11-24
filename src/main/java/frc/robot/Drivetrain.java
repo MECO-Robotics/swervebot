@@ -12,6 +12,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /** Represents a swerve drive style drivetrain. */
@@ -46,10 +47,14 @@ public class Drivetrain extends SubsystemBase {
   private final SwerveDriveOdometry m_odometry = new SwerveDriveOdometry(m_kinematics, m_gyro.getRotation2d());
 
   public Drivetrain() {
+
+    CommandScheduler.getInstance().registerSubsystem(this);
+
     addChild("Front Right Turn", m_frontRight.getTurnEncoder());
     addChild("Back Right Turn", m_backRight.getTurnEncoder());
     addChild("Back Left Turn", m_backLeft.getTurnEncoder());
     addChild("Front Left Turn", m_frontLeft.getTurnEncoder());
+    
     m_gyro.reset();
   }
 
