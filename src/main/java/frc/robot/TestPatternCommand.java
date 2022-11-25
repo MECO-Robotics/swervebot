@@ -34,7 +34,7 @@ public class TestPatternCommand extends CommandBase {
         // set the initial desired state on the drive train:
         // drive: 0
         // turn: 90 in radians
-        m_driveTrain.drive(0, 0, Math.PI/2f, false);
+        m_driveTrain.drive(0, 0.2, 0, false);
         commandEndTime = System.currentTimeMillis() + COMMAND_TIME;
     }
 

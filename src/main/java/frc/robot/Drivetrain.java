@@ -78,8 +78,12 @@ public class Drivetrain extends SubsystemBase {
       chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, rot);
     }
 
+    System.out.println("Chassis speeds: "+ chassisSpeeds);
     SwerveModuleState[] swerveModuleStates = m_kinematics.toSwerveModuleStates(chassisSpeeds);
-
+    System.out.println("Front right: " + swerveModuleStates[0]);
+    System.out.println("Back right: " + swerveModuleStates[1]);
+    System.out.println("Back left: " + swerveModuleStates[2]);
+    System.out.println("Front right: " + swerveModuleStates[3]);
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, kMaxSpeed);
     m_frontRight.setDesiredState(swerveModuleStates[0]);
     m_backRight.setDesiredState(swerveModuleStates[1]);

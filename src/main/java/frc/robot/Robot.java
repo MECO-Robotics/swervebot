@@ -27,6 +27,7 @@ public class Robot extends TimedRobot {
     // --------------------------------------------------------------------------
 
     public Robot() {
+        super(1);
         CommandScheduler.getInstance().enable();
     }
 
@@ -69,10 +70,20 @@ public class Robot extends TimedRobot {
     }
 
     int module;
+    long pressTimer = 0;
 
     @Override
     public void testPeriodic() {
 
+        if (pressTimer > 0) {
+            if (System.currentTimeMillis() < (pressTimer + 500)) {
+                System.out.println("Ignoring input ...");
+                return;
+            } else {
+                System.out.println("resuming input ...");
+                pressTimer = 0;
+            }
+        }
         // controls for selecting which swerve module you are testing
         if (m_controller.getYButton()) {
             drive = 0;
@@ -105,30 +116,34 @@ public class Robot extends TimedRobot {
         // controls for increasing speed and turn
 
         if (m_controller.getPOV() == 0) {
-            // increase drive by .1
-            drive = drive + 0.1;
+            // increase drive by .01
+            drive = drive + 0.05;
+            pressTimer = System.currentTimeMillis();
         }
 
         if (m_controller.getPOV() == 90) {
             // increase turn by .1
             turn = turn + 0.05;
+            pressTimer = System.currentTimeMillis();
         }
 
         if (m_controller.getPOV() == 180) {
-            // decrease drive by .1
-            drive = drive - 0.01;
+            // decrease drive by .01
+            drive = drive - 0.05;
+            pressTimer = System.currentTimeMillis();
         }
 
         if (m_controller.getPOV() == 270) {
             // decrease turn by .1
             turn = turn - 0.05;
+            pressTimer = System.currentTimeMillis();
         }
 
         // allows for control of the swerve modules
         m_driveTrain.control(module, drive, turn);
 
-        if (m_controller.getStartButtonPressed()) {
-
+        if (m_controller.getRightBumperPressed()) {
+System.out.println("Right bumper pressed!");
             if (!CommandScheduler.getInstance().isScheduled(m_TestPatternCommand)) {
 
                 CommandScheduler.getInstance().schedule(m_TestPatternCommand);
