@@ -45,7 +45,11 @@ public class SwerveModule {
 
     // Gains are for example purposes only - must be determined for your own robot!
     private final SimpleMotorFeedforward m_driveFeedforward = new SimpleMotorFeedforward(1, 3);
-    private final SimpleMotorFeedforward m_turnFeedforward = new SimpleMotorFeedforward(1, 0.5);
+
+    // "volts" here really refers to the input level to the motor of -1.0 to 1.0
+    // ks is in volts.  Original value: 1
+    // kv is volts * seconds / radians.  Original value: 0.5
+    private final SimpleMotorFeedforward m_turnFeedforward = new SimpleMotorFeedforward(1, 0.1);
 
     // --------------------------------------------------------------------------
 
@@ -147,8 +151,9 @@ public class SwerveModule {
         // m_driveFeedforward.calculate(state.speedMetersPerSecond);
 
         // Calculate the turning motor output from the turning PID controller.
-        final double turnOutput = m_turningPIDController.calculate(m_turningEncoder.get(), state.angle.getRadians());
+        final double turnOutput = m_turningPIDController.calculate(m_turningEncoder.getDistance(), state.angle.getRadians());
 
+        // Use the desired velocity (rad/s) and run through a feedfoward controller, which basically increases the velocity by 50%
         final double turnFeedforward = m_turnFeedforward.calculate(m_turningPIDController.getSetpoint().velocity);
 
         // m_driveMotor.set(ControlMode.PercentOutput, driveOutput + driveFeedforward);
@@ -175,6 +180,7 @@ public class SwerveModule {
 
     // --------------------------------------------------------------------------
 
+    
     /**
      * Get the turning encoder
      */
