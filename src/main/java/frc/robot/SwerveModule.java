@@ -118,16 +118,29 @@ public class SwerveModule {
 
     // --------------------------------------------------------------------------
 
+    Rotation2d lastAngle = Rotation2d.fromDegrees(0);
+
     /**
      * Sets the desired state for the module.
      *
      * @param desiredState Desired state with speed and angle.
      */
     public void setDesiredState(SwerveModuleState desiredState) {
-        System.out.println(desiredState);
+
+        // --------------------------------------------------------------------
         // Optimize the reference state to avoid spinning further than 90 degrees
+        //
         SwerveModuleState state = SwerveModuleState.optimize(desiredState,
                 new Rotation2d(m_turningEncoder.getDistance()));
+
+        // ----------------------------------------------------------------
+        // Prevent jitter by checking if the drive speed is less than 10%.
+        //
+        if (Math.abs(state.speedMetersPerSecond) <= (Drivetrain.kMaxSpeed * 0.01)) {
+            state.angle = lastAngle;
+        } else {
+            lastAngle = state.angle;
+        }
 
         // Calculate the drive output from the drive PID controller.
         // This applies PID control, but also effectively changes m/s into % output
@@ -151,6 +164,13 @@ public class SwerveModule {
         // final double driveFeedforward =
         // m_driveFeedforward.calculate(state.speedMetersPerSecond);
 
+        // From
+        // https://github.com/msdifede/FRCSwerve2022/blob/ed5e07e12625b80e12fc02ac8e514a1bc530df18/src/main/java/frc/robot/SwerveModule.java
+        // double angle = (Math.abs(desiredState.speedMetersPerSecond) <=
+        // (Constants.Swerve.maxSpeed * 0.01)) ? lastAngle :
+        // desiredState.angle.getDegrees(); //Prevent rotating module if speed is less
+        // then 1%. Prevents Jittering.
+
         // Calculate the turning motor output from the turning PID controller.
         final double turnOutput = m_turningPIDController.calculate(m_turningEncoder.getDistance(),
                 state.angle.getRadians());
@@ -164,8 +184,6 @@ public class SwerveModule {
         // for now, just use the linear conversion from m/s to percent output
         m_driveMotor.set(ControlMode.PercentOutput, driveOutput);
         m_turningMotor.set(ControlMode.PercentOutput, turnOutput + turnFeedforward);
-        System.out.println(driveOutput);
-        System.out.println(turnOutput + turnFeedforward);
     }
 
     public void setDesiredTurn(Rotation2d turn) {

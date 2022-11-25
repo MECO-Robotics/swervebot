@@ -34,26 +34,41 @@ public class Drivetrain extends SubsystemBase {
     public static final double kMaxAngularSpeed = 2.0;
 
     // Offset lengths from the center to the wheels
-    // Robot orientation is x forward, y left
-    float x = 0.2365375f;
-    float y = 0.22225f;
+    // Robot orientation is x forward, y left, with swerve modules numbered
+    //
+    // ......................^
+    // ......................|
+    // .....................(X)
+    // ......................|
+    // ................[3] front [0]
+    // .......<---(Y)--------+------------->
+    // ................[2] back [1]
+    // ......................|
+    // ......................|
+    // ......................v
+    //
+    // Our swerve bot frame is 24" square, but the swerve modules position the
+    // wheels in a rectangle
+    public static final float kXOffset = 0.2365375f; // in meters
+    public static final float kYOffset = 0.22225f; // in meters
 
     // Rivet's convention is we start from the front right swerve module and go
     // clockwise from there
     // for Encoder inputs and CAN IDs
-    private final Translation2d m_frontRightLocation = new Translation2d(x, -y);
-    private final Translation2d m_backRightLocation = new Translation2d(-x, -y);
-    private final Translation2d m_backLeftLocation = new Translation2d(-x, y);
-    private final Translation2d m_frontLeftLocation = new Translation2d(x, y);
+    private final Translation2d m_frontRightLocation = new Translation2d(kXOffset, -kYOffset);
+    private final Translation2d m_backRightLocation = new Translation2d(-kXOffset, -kYOffset);
+    private final Translation2d m_backLeftLocation = new Translation2d(-kXOffset, kYOffset);
+    private final Translation2d m_frontLeftLocation = new Translation2d(kXOffset, kYOffset);
 
     private final SwerveModule m_frontRight = new SwerveModule(1, 2, -1, -1, 0, 1);
     private final SwerveModule m_backRight = new SwerveModule(3, 4, -1, -1, 2, 3);
     private final SwerveModule m_backLeft = new SwerveModule(5, 6, -1, -1, 4, 5);
     private final SwerveModule m_frontLeft = new SwerveModule(7, 8, -1, -1, 8, 9);
 
-    // For convienence in testing and addressing a single module just using a number 0 to 3
+    // For convienence in testing and addressing a single module just using a number
+    // 0 to 3
     private final SwerveModule[] m_modules = new SwerveModule[] {
-        m_frontRight, m_backRight, m_backLeft, m_frontLeft
+            m_frontRight, m_backRight, m_backLeft, m_frontLeft
     };
 
     private final AnalogGyro m_gyro = new AnalogGyro(0);
@@ -78,7 +93,8 @@ public class Drivetrain extends SubsystemBase {
 
     /**
      * Turn a module to a specific angle.
-     * @param module 0 to 3 starting with front right
+     * 
+     * @param module      0 to 3 starting with front right
      * @param turnDegrees The angle in degrees, usually -90 to 90
      */
     public void turnModule(int module, double turnDegrees) {
