@@ -27,7 +27,7 @@ public class Robot extends TimedRobot {
     // --------------------------------------------------------------------------
 
     public Robot() {
-        super(1);
+        super();        // Pass in a number here to change the update rate
         CommandScheduler.getInstance().enable();
     }
 
@@ -55,8 +55,11 @@ public class Robot extends TimedRobot {
     // --------------------------------------------------------------------------
     // Test Mode
 
+    // Class variables used just for Test mode
     double drive = 0;
     double turn = 0;
+    int module;
+    long pressTimer = 0;
 
     @Override
     public void testInit() {
@@ -69,11 +72,10 @@ public class Robot extends TimedRobot {
         CommandScheduler.getInstance().cancelAll();
     }
 
-    int module;
-    long pressTimer = 0;
-
     @Override
     public void testPeriodic() {
+
+        final double kTurnIncrement = 15;
 
         if (pressTimer > 0) {
             if (System.currentTimeMillis() < (pressTimer + 500)) {
@@ -123,7 +125,7 @@ public class Robot extends TimedRobot {
 
         if (m_controller.getPOV() == 90) {
             // increase turn by .1
-            turn = turn + 0.05;
+            turn = turn + kTurnIncrement;
             pressTimer = System.currentTimeMillis();
         }
 
@@ -135,15 +137,21 @@ public class Robot extends TimedRobot {
 
         if (m_controller.getPOV() == 270) {
             // decrease turn by .1
-            turn = turn - 0.05;
+            turn = turn - kTurnIncrement;
             pressTimer = System.currentTimeMillis();
         }
 
         // allows for control of the swerve modules
-        m_driveTrain.control(module, drive, turn);
+        //m_driveTrain.control(module, drive, turn);
+
+        m_driveTrain.turnModule(module, turn);
+
+
+        // 
+        // TEST PATTERN COMMAND
+        //
 
         if (m_controller.getRightBumperPressed()) {
-System.out.println("Right bumper pressed!");
             if (!CommandScheduler.getInstance().isScheduled(m_TestPatternCommand)) {
 
                 CommandScheduler.getInstance().schedule(m_TestPatternCommand);

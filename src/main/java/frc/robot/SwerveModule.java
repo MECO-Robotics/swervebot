@@ -47,8 +47,8 @@ public class SwerveModule {
     private final SimpleMotorFeedforward m_driveFeedforward = new SimpleMotorFeedforward(1, 3);
 
     // "volts" here really refers to the input level to the motor of -1.0 to 1.0
-    // ks is in volts.  Original value: 1
-    // kv is volts * seconds / radians.  Original value: 0.5
+    // ks is in volts. Original value: 1
+    // kv is volts * seconds / radians. Original value: 0.5
     private final SimpleMotorFeedforward m_turnFeedforward = new SimpleMotorFeedforward(1, 0.1);
 
     // --------------------------------------------------------------------------
@@ -126,7 +126,8 @@ public class SwerveModule {
     public void setDesiredState(SwerveModuleState desiredState) {
         System.out.println(desiredState);
         // Optimize the reference state to avoid spinning further than 90 degrees
-        SwerveModuleState state = SwerveModuleState.optimize(desiredState, new Rotation2d(m_turningEncoder.get()));
+        SwerveModuleState state = SwerveModuleState.optimize(desiredState,
+                new Rotation2d(m_turningEncoder.getDistance()));
 
         // Calculate the drive output from the drive PID controller.
         // This applies PID control, but also effectively changes m/s into % output
@@ -151,9 +152,11 @@ public class SwerveModule {
         // m_driveFeedforward.calculate(state.speedMetersPerSecond);
 
         // Calculate the turning motor output from the turning PID controller.
-        final double turnOutput = m_turningPIDController.calculate(m_turningEncoder.getDistance(), state.angle.getRadians());
+        final double turnOutput = m_turningPIDController.calculate(m_turningEncoder.getDistance(),
+                state.angle.getRadians());
 
-        // Use the desired velocity (rad/s) and run through a feedfoward controller, which basically increases the velocity by 50%
+        // Use the desired velocity (rad/s) and run through a feedfoward controller,
+        // which basically increases the velocity by 50%
         final double turnFeedforward = m_turnFeedforward.calculate(m_turningPIDController.getSetpoint().velocity);
 
         // m_driveMotor.set(ControlMode.PercentOutput, driveOutput + driveFeedforward);
@@ -165,6 +168,16 @@ public class SwerveModule {
         System.out.println(turnOutput + turnFeedforward);
     }
 
+    public void setDesiredTurn(Rotation2d turn) {
+        final Rotation2d encoderRotation = new Rotation2d(m_turningEncoder.getDistance());
+
+        final double turnOutput = m_turningPIDController.calculate(m_turningEncoder.getDistance(), turn.getRadians());
+
+        System.out.println(String.format("Encoder/Desired/Output: %6.0f, %6.0f, %5.2f",
+                encoderRotation.getDegrees(), turn.getDegrees(), turnOutput));
+
+        m_turningMotor.set(ControlMode.PercentOutput, turnOutput);
+    }
     // --------------------------------------------------------------------------
 
     /**
@@ -180,7 +193,6 @@ public class SwerveModule {
 
     // --------------------------------------------------------------------------
 
-    
     /**
      * Get the turning encoder
      */
