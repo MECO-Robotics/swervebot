@@ -167,7 +167,7 @@ public class Drivetrain extends SubsystemBase {
             currentswervemodule = m_frontLeft;
         }
 
-        System.out.println(String.format("Encoder: %5.1f, Level: %5.1f", currentswervemodule.getTurnEncoder().getDistance(), rot));
+        System.out.println(String.format("Encoder: %8.4f, Level: %8.4f", currentswervemodule.getTurnEncoder().getDistance(), rot));
         currentswervemodule.rawInput(drive, rot);
 
     }
