@@ -20,7 +20,7 @@ import edu.wpi.first.wpilibj.Encoder;
 
 public class SwerveModule {
 
-    private static final int kSteerEncoderResolution = 1660; // Originally 4096
+    private static final int kSteerEncoderResolution = 415; // Originally 4096
     private static final int kDriveEncoderResolution = 1; // NOT USED!
 
     private static final double kModuleMaxAngularVelocity = Drivetrain.kMaxAngularSpeed;
@@ -194,7 +194,7 @@ public class SwerveModule {
         System.out.println(String.format("Encoder/Desired/Output: %6.0f, %6.0f, %5.2f",
                 encoderRotation.getDegrees(), turn.getDegrees(), turnOutput));
 
-        m_turningMotor.set(ControlMode.PercentOutput, turnOutput);
+        m_turningMotor.set(ControlMode.PercentOutput, -turnOutput);
     }
     // --------------------------------------------------------------------------
 
@@ -206,7 +206,7 @@ public class SwerveModule {
      */
     public void rawInput(double drive, double turn) {
         m_driveMotor.set(ControlMode.PercentOutput, drive);
-        m_turningMotor.set(ControlMode.PercentOutput, turn);
+        m_turningMotor.set(ControlMode.PercentOutput, -turn);
     }
 
     // --------------------------------------------------------------------------

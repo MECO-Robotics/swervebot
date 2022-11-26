@@ -98,6 +98,7 @@ public class Drivetrain extends SubsystemBase {
      * @param turnDegrees The angle in degrees, usually -90 to 90
      */
     public void turnModule(int module, double turnDegrees) {
+        System.out.println(String.format("Encoder: %5.1f, Level: %5.1f", m_modules[module].getTurnEncoder().getDistance(), turnDegrees));
         m_modules[module].setDesiredTurn(Rotation2d.fromDegrees(turnDegrees));
     }
 

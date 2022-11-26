@@ -75,7 +75,7 @@ public class Robot extends TimedRobot {
     @Override
     public void testPeriodic() {
 
-        final double kTurnIncrement = 0.05;
+        final double kTurnIncrement = 15;
 
         if (pressTimer > 0) {
             if (System.currentTimeMillis() < (pressTimer + 500)) {
@@ -142,9 +142,9 @@ public class Robot extends TimedRobot {
         }
 
         // allows for control of the swerve modules
-        m_driveTrain.control(module, drive, turn);
+        //m_driveTrain.control(module, drive, turn);
 
-       // m_driveTrain.turnModule(module, turn);
+        m_driveTrain.turnModule(module, turn);
 
 
         // 
