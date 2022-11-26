@@ -172,18 +172,18 @@ public class SwerveModule {
         // then 1%. Prevents Jittering.
 
         // Calculate the turning motor output from the turning PID controller.
-        final double turnOutput = m_turningPIDController.calculate(m_turningEncoder.getDistance(),
+        double turnOutput = m_turningPIDController.calculate(m_turningEncoder.getDistance(),
                 state.angle.getRadians());
 
         // Use the desired velocity (rad/s) and run through a feedfoward controller,
         // which basically increases the velocity by 50%
-        final double turnFeedforward = m_turnFeedforward.calculate(m_turningPIDController.getSetpoint().velocity);
+        turnOutput = turnOutput + m_turnFeedforward.calculate(m_turningPIDController.getSetpoint().velocity);
 
         // m_driveMotor.set(ControlMode.PercentOutput, driveOutput + driveFeedforward);
 
         // for now, just use the linear conversion from m/s to percent output
         m_driveMotor.set(ControlMode.PercentOutput, driveOutput);
-        m_turningMotor.set(ControlMode.PercentOutput, turnOutput + turnFeedforward);
+        m_turningMotor.set(ControlMode.PercentOutput, -turnOutput);
     }
 
     public void setDesiredTurn(Rotation2d turn) {
@@ -200,7 +200,7 @@ public class SwerveModule {
 
     /**
      * Direct control of the swerve module motors, regardless of current state
-     * 
+     *
      * @param drive The input level -1.0 to 1.0 for the driver motor
      * @param turn  The input level -1.0 to 1.0 for the steer motor
      */
