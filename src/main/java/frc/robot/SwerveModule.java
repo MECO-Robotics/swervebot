@@ -177,7 +177,7 @@ public class SwerveModule {
 
         // Use the desired velocity (rad/s) and run through a feedfoward controller,
         // which basically increases the velocity by 50%
-        turnOutput = turnOutput + m_turnFeedforward.calculate(m_turningPIDController.getSetpoint().velocity);
+        //turnOutput = turnOutput + m_turnFeedforward.calculate(m_turningPIDController.getSetpoint().velocity);
 
         // m_driveMotor.set(ControlMode.PercentOutput, driveOutput + driveFeedforward);
 
