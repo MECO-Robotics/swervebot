@@ -206,7 +206,7 @@ public class SwerveModule {
      */
     public void rawInput(double drive, double turn) {
         m_driveMotor.set(ControlMode.PercentOutput, drive);
-        m_turningMotor.set(ControlMode.PercentOutput, -turn);
+        m_turningMotor.set(ControlMode.PercentOutput, turn);
     }
 
     // --------------------------------------------------------------------------

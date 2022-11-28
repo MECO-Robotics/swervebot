@@ -75,7 +75,7 @@ public class Robot extends TimedRobot {
     @Override
     public void testPeriodic() {
 
-        final double kTurnIncrement = 15;
+        final double kTurnIncrement = .05;
 
         if (pressTimer > 0) {
             if (System.currentTimeMillis() < (pressTimer + 500)) {
@@ -118,33 +118,30 @@ public class Robot extends TimedRobot {
         // controls for increasing speed and turn
 
         if (m_controller.getPOV() == 0) {
-            // increase drive by .01
-            drive = drive + 0.05;
+            drive = drive + 0.1;
             pressTimer = System.currentTimeMillis();
         }
 
         if (m_controller.getPOV() == 90) {
-            // increase turn by .1
             turn = turn + kTurnIncrement;
             pressTimer = System.currentTimeMillis();
         }
 
         if (m_controller.getPOV() == 180) {
-            // decrease drive by .01
-            drive = drive - 0.05;
+            drive = drive - 0.1;
             pressTimer = System.currentTimeMillis();
         }
 
         if (m_controller.getPOV() == 270) {
-            // decrease turn by .1
             turn = turn - kTurnIncrement;
             pressTimer = System.currentTimeMillis();
         }
 
         // allows for control of the swerve modules
-        //m_driveTrain.control(module, drive, turn);
+        m_driveTrain.control(module, drive, turn);
 
-        m_driveTrain.turnModule(module, turn);
+        // turn a module to a specific number of degrees
+        //m_driveTrain.turnModule(module, turn);
 
 
         // 

@@ -98,7 +98,8 @@ public class Drivetrain extends SubsystemBase {
      * @param turnDegrees The angle in degrees, usually -90 to 90
      */
     public void turnModule(int module, double turnDegrees) {
-        System.out.println(String.format("Encoder: %5.1f, Level: %5.1f", m_modules[module].getTurnEncoder().getDistance(), turnDegrees));
+        System.out.println(String.format("Encoder: %5.1f, Level: %5.1f",
+                m_modules[module].getTurnEncoder().getDistance(), turnDegrees));
         m_modules[module].setDesiredTurn(Rotation2d.fromDegrees(turnDegrees));
     }
 
@@ -147,29 +148,15 @@ public class Drivetrain extends SubsystemBase {
     // m_backRight.getState());
     // }
 
-    public void control(int SwerveModuleNumber, double drive, double rot) {
-        SwerveModule currentswervemodule;
-        currentswervemodule = null;
+    public void control(int module, double drive, double rot) {
+        
+        System.out.println(String.format("Module/Encoder/turn/drive, %d, %8.4f, %8.2f, %8.2f",
+                module,
+                m_modules[module].getTurnEncoder().getDistance(),
+                rot,
+                drive));
 
-        if (SwerveModuleNumber == 0) {
-            currentswervemodule = m_frontRight;
-        }
-
-        if (SwerveModuleNumber == 1) {
-            currentswervemodule = m_backRight;
-        }
-
-        if (SwerveModuleNumber == 2) {
-            currentswervemodule = m_backLeft;
-        }
-
-        if (SwerveModuleNumber == 3) {
-            currentswervemodule = m_frontLeft;
-        }
-
-        System.out.println(String.format("Encoder: %8.4f, Level: %8.4f", currentswervemodule.getTurnEncoder().getDistance(), rot));
-        currentswervemodule.rawInput(drive, rot);
-
+        m_modules[module].rawInput(drive, rot);
     }
 
     // --------------------------------------------------------------------------
