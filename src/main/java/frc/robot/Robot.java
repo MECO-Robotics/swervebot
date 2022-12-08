@@ -27,7 +27,7 @@ public class Robot extends TimedRobot {
     // --------------------------------------------------------------------------
 
     public Robot() {
-        super();        // Pass in a number here to change the update rate
+        super(); // Pass in a number here to change the update rate
         CommandScheduler.getInstance().enable();
     }
 
@@ -86,6 +86,10 @@ public class Robot extends TimedRobot {
                 pressTimer = 0;
             }
         }
+
+        if(false){
+
+        
         // controls for selecting which swerve module you are testing
         if (m_controller.getYButton()) {
             drive = 0;
@@ -139,22 +143,34 @@ public class Robot extends TimedRobot {
 
         // allows for control of the swerve modules
         m_driveTrain.control(module, drive, turn);
-
+    }
         // turn a module to a specific number of degrees
-        //m_driveTrain.turnModule(module, turn);
+        // m_driveTrain.turnModule(module, turn);
 
-
-        // 
+        //
         // TEST PATTERN COMMAND
         //
 
         if (m_controller.getRightBumperPressed()) {
-            if (!CommandScheduler.getInstance().isScheduled(m_TestPatternCommand)) {
-
-                CommandScheduler.getInstance().schedule(m_TestPatternCommand);
-            }
+            System.out.println("Turning RIGHT");
+            pressTimer = System.currentTimeMillis();
+            m_allAngle += 180;
         }
+
+        if (m_controller.getLeftBumperPressed()) {
+            System.out.println("Turning LEFT");
+            pressTimer = System.currentTimeMillis();
+            m_allAngle -= 180;
+        }
+
+        m_driveTrain.turnModule(0, m_allAngle);
+        m_driveTrain.turnModule(1, m_allAngle);
+        m_driveTrain.turnModule(2, m_allAngle);
+        m_driveTrain.turnModule(3, m_allAngle);
+
     }
+
+    double m_allAngle = 0;
 
     @Override
     public void testExit() {
