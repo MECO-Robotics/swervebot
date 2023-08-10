@@ -4,13 +4,23 @@
 
 package frc.robot;
 
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+import com.ctre.phoenix.sensors.WPI_CANCoder;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.AnalogGyro;
+import edu.wpi.first.wpilibj.CounterBase;
+import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.motorcontrol.MotorController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -42,7 +52,7 @@ public class Drivetrain extends SubsystemBase {
     // ......................|
     // ................[3] front [0]
     // .......<---(Y)--------+------------->
-    // ................[2] back [1]
+    // ................[2] back_ [1]
     // ......................|
     // ......................|
     // ......................v
@@ -60,16 +70,9 @@ public class Drivetrain extends SubsystemBase {
     private final Translation2d m_backLeftLocation = new Translation2d(-kXOffset, kYOffset);
     private final Translation2d m_frontLeftLocation = new Translation2d(kXOffset, kYOffset);
 
-    private final SwerveModule m_frontRight = new SwerveModule(1, 2, -1, -1, 0, 1);
-    private final SwerveModule m_backRight = new SwerveModule(3, 4, -1, -1, 2, 3);
-    private final SwerveModule m_backLeft = new SwerveModule(5, 6, -1, -1, 4, 5);
-    private final SwerveModule m_frontLeft = new SwerveModule(7, 8, -1, -1, 8, 9);
-
     // For convienence in testing and addressing a single module just using a number
     // 0 to 3
-    private final SwerveModule[] m_modules = new SwerveModule[] {
-            m_frontRight, m_backRight, m_backLeft, m_frontLeft
-    };
+    private final SwerveModule[] m_modules = new SwerveModule[4];
 
     private final AnalogGyro m_gyro = new AnalogGyro(0);
 
@@ -77,18 +80,54 @@ public class Drivetrain extends SubsystemBase {
     private final SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(
             m_frontRightLocation, m_backRightLocation, m_backLeftLocation, m_frontLeftLocation);
 
-    private final SwerveDriveOdometry m_odometry = new SwerveDriveOdometry(m_kinematics, m_gyro.getRotation2d());
+    private final SwerveDriveOdometry m_odometry;
 
     public Drivetrain() {
 
         CommandScheduler.getInstance().registerSubsystem(this);
 
-        addChild("Front Right Turn", m_frontRight.getTurnEncoder());
-        addChild("Back Right Turn", m_backRight.getTurnEncoder());
-        addChild("Back Left Turn", m_backLeft.getTurnEncoder());
-        addChild("Front Left Turn", m_frontLeft.getTurnEncoder());
+        m_modules[0] = new SwerveModuleCANCoder(
+                createMotorController(0), createSteerController(4),
+                new WPI_CANCoder(0), new WPI_CANCoder(4), m_frontRightLocation);
+        m_modules[1] = new SwerveModuleCANCoder(
+                createMotorController(1), createSteerController(5),
+                new WPI_CANCoder(1), new WPI_CANCoder(5), m_backRightLocation);
+        m_modules[2] = new SwerveModuleCANCoder(
+                createMotorController(2), createSteerController(6),
+                new WPI_CANCoder(2), new WPI_CANCoder(6), m_backLeftLocation);
+        m_modules[3] = new SwerveModuleCANCoder(
+                createMotorController(3), createSteerController(7),
+                new WPI_CANCoder(3), new WPI_CANCoder(7), m_frontLeftLocation);
+
+        SwerveModulePosition[] positions = new SwerveModulePosition[] {
+                m_modules[0].getModulePosition(),
+                m_modules[1].getModulePosition(),
+                m_modules[2].getModulePosition(),
+                m_modules[3].getModulePosition()
+        };
+
+        m_odometry = new SwerveDriveOdometry(m_kinematics, m_gyro.getRotation2d(),
+                positions);
 
         m_gyro.reset();
+    }
+
+    /**
+     * Create the right kind of motor controller to match the hardware
+     * 
+     * @param canID
+     * @return
+     */
+    private MotorController createMotorController(int canID) {
+        return new CANSparkMax(canID, MotorType.kBrushed);
+        // return new WPI_TalonSRX(turningEncoderChannelB);
+        // return new WPI_VictorSPX(turningEncoderChannelB);
+    }
+
+    private MotorController createSteerController(int canID) {
+        return new CANSparkMax(canID, MotorType.kBrushed);
+        // return new WPI_TalonSRX(turningEncoderChannelB);
+        // return new WPI_VictorSPX(turningEncoderChannelB);
     }
 
     /**
@@ -99,7 +138,7 @@ public class Drivetrain extends SubsystemBase {
      */
     public void turnModule(int module, double turnDegrees) {
         System.out.println(String.format("Encoder: %5.1f, Level: %5.1f",
-                m_modules[module].getTurnEncoder().getDistance(), turnDegrees));
+                m_modules[module].getTurnDistance(), turnDegrees));
         m_modules[module].setDesiredTurn(Rotation2d.fromDegrees(turnDegrees));
     }
 
@@ -132,10 +171,10 @@ public class Drivetrain extends SubsystemBase {
 
         SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, kMaxSpeed);
 
-        m_frontRight.setDesiredState(swerveModuleStates[0]);
-        m_backRight.setDesiredState(swerveModuleStates[1]);
-        m_backLeft.setDesiredState(swerveModuleStates[2]);
-        m_frontLeft.setDesiredState(swerveModuleStates[3]);
+        m_modules[0].setDesiredState(swerveModuleStates[0]);
+        m_modules[1].setDesiredState(swerveModuleStates[1]);
+        m_modules[2].setDesiredState(swerveModuleStates[2]);
+        m_modules[3].setDesiredState(swerveModuleStates[3]);
     }
 
     /** Updates the field relative position of the robot. */
@@ -149,10 +188,10 @@ public class Drivetrain extends SubsystemBase {
     // }
 
     public void control(int module, double drive, double rot) {
-        
+
         System.out.println(String.format("Module/Encoder/turn/drive, %d, %8.4f, %8.2f, %8.2f",
                 module,
-                m_modules[module].getTurnEncoder().getDistance(),
+                m_modules[module].getTurnDistance(),
                 rot,
                 drive));
 
@@ -163,10 +202,6 @@ public class Drivetrain extends SubsystemBase {
 
     @Override
     public void periodic() {
-        SmartDashboard.putNumber("Front Right turn encoder RAW", m_frontRight.getTurnEncoder().getRaw());
-        SmartDashboard.putNumber("Back Right turn encoder RAW", m_backRight.getTurnEncoder().getRaw());
-        SmartDashboard.putNumber("Front Left turn encoder RAW", m_frontLeft.getTurnEncoder().getRaw());
-        SmartDashboard.putNumber("Back Left turn encoder RAW", m_backLeft.getTurnEncoder().getRaw());
     }
 
 }

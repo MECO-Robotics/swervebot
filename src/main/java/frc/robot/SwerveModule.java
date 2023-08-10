@@ -4,33 +4,34 @@
 
 package frc.robot;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.IMotorController;
-import com.ctre.phoenix.motorcontrol.IMotorControllerEnhanced;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.ctre.phoenix.motorcontrol.can.VictorSPX;
-
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.motorcontrol.MotorController;
 
-public class SwerveModule {
-
-    private static final int kSteerEncoderResolution = 415; // Originally 4096
-    private static final int kDriveEncoderResolution = 1; // NOT USED!
+/**
+ * This type of swerve module Uses:
+ * 
+ * - SparkMax controllers for both drive and steer
+ * - CANCoder encoders for drive and steer
+ * - Mini CIMs for drive and steer
+ */
+public class SwerveModule implements Sendable {
 
     private static final double kModuleMaxAngularVelocity = Drivetrain.kMaxAngularSpeed;
     private static final double kModuleMaxAngularAcceleration = 2 * Math.PI; // radians per second squared
 
-    private final IMotorControllerEnhanced m_driveMotor;
-    private final IMotorController m_turningMotor;
-
-    private final Encoder m_driveEncoder = null; // not using drive encoders (yet)
-    private final Encoder m_turningEncoder;
+    private final Translation2d m_location;
+    private final MotorController m_driveMotor;     // Either CANSparkMax or WPI_TalonSRX implementation
+    private final MotorController m_turningMotor;
 
     // Gains are for example purposes only - must be determined for your own robot!
     private final PIDController m_drivePIDController = new PIDController(1, 0, 0);
@@ -54,42 +55,33 @@ public class SwerveModule {
     // --------------------------------------------------------------------------
 
     /**
-     * Constructs a SwerveModule with a drive motor, turning motor, drive encoder
-     * and turning encoder.
+     * Constructs a SwerveModule with a drive motor, turning motor.
      *
-     * @param driveMotorCanId        PWM output for the drive motor.
-     * @param turningMotorCanId      PWM output for the turning motor.
-     * @param driveEncoderChannelA   DIO input for the drive encoder channel A
-     * @param driveEncoderChannelB   DIO input for the drive encoder channel B
-     * @param turningEncoderChannelA DIO input for the turning encoder channel A
-     * @param turningEncoderChannelB DIO input for the turning encoder channel B
      */
     public SwerveModule(
-            int driveMotorCanId,
-            int turningMotorCanId,
-            int driveEncoderChannelA,
-            int driveEncoderChannelB,
-            int turningEncoderChannelA,
-            int turningEncoderChannelB) {
+        MotorController driveMotorController,
+        MotorController steerMotorController,
+        Translation2d location) {
 
-        m_driveMotor = new TalonSRX(driveMotorCanId);
-        m_turningMotor = new VictorSPX(turningMotorCanId);
+            m_driveMotor = driveMotorController;
+            m_turningMotor = steerMotorController;
+            m_location = location;
 
         //
         // Setup the Turning Encoder
         //
 
-        m_turningEncoder = new Encoder(turningEncoderChannelA, turningEncoderChannelB);
-        m_turningEncoder.setReverseDirection(true);
+        // m_turningEncoder = new Encoder(turningEncoderChannelA, turningEncoderChannelB);
+        // m_turningEncoder.setReverseDirection(true);
 
         // Set the distance (in this case, angle) per pulse for the turning encoder.
         // This is the the angle through an entire rotation (2 * pi) divided by the
         // encoder resolution.
-        m_turningEncoder.setDistancePerPulse(2 * Math.PI / kSteerEncoderResolution);
+        // m_turningEncoder.setDistancePerPulse(2 * Math.PI / kSteerEncoderResolution);
 
         // Limit the PID Controller's input range between -pi and pi and set the input
         // to be continuous.
-        m_turningPIDController.enableContinuousInput(-Math.PI, Math.PI);
+        // m_turningPIDController.enableContinuousInput(-Math.PI, Math.PI);
 
         //
         // Setup the Drive Encoder (not currently available)
@@ -106,6 +98,14 @@ public class SwerveModule {
 
     // --------------------------------------------------------------------------
 
+    Translation2d getTranslationFromCenter() {
+        return m_location;
+    }
+
+    SwerveModulePosition getModulePosition() {
+        return new SwerveModulePosition(m_location.getDistance(new Translation2d()), m_location.getAngle());
+    }
+
     /**
      * Returns the current state of the module.
      *
@@ -121,6 +121,14 @@ public class SwerveModule {
     Rotation2d lastAngle = Rotation2d.fromDegrees(0);
 
     /**
+     * 
+     * @return
+     */
+    public double getTurnDistance() {
+        return 0.0;
+    }
+
+    /**
      * Sets the desired state for the module.
      *
      * @param desiredState Desired state with speed and angle.
@@ -131,7 +139,7 @@ public class SwerveModule {
         // Optimize the reference state to avoid spinning further than 90 degrees
         //
         SwerveModuleState state = SwerveModuleState.optimize(desiredState,
-                new Rotation2d(m_turningEncoder.getDistance()));
+                new Rotation2d(getTurnDistance()));
 
         // ----------------------------------------------------------------
         // Prevent jitter by checking if the drive speed is less than 10%.
@@ -172,7 +180,7 @@ public class SwerveModule {
         // then 1%. Prevents Jittering.
 
         // Calculate the turning motor output from the turning PID controller.
-        double turnOutput = m_turningPIDController.calculate(m_turningEncoder.getDistance(),
+        double turnOutput = m_turningPIDController.calculate(getTurnDistance(),
                 state.angle.getRadians());
 
         // Use the desired velocity (rad/s) and run through a feedfoward controller,
@@ -182,19 +190,19 @@ public class SwerveModule {
         // m_driveMotor.set(ControlMode.PercentOutput, driveOutput + driveFeedforward);
 
         // for now, just use the linear conversion from m/s to percent output
-        m_driveMotor.set(ControlMode.PercentOutput, driveOutput);
-        m_turningMotor.set(ControlMode.PercentOutput, -turnOutput);
+        m_driveMotor.set(driveOutput);
+        m_turningMotor.set(-turnOutput);
     }
 
     public void setDesiredTurn(Rotation2d turn) {
-        final Rotation2d encoderRotation = new Rotation2d(m_turningEncoder.getDistance());
+        final Rotation2d encoderRotation = new Rotation2d(getTurnDistance());
 
-        final double turnOutput = m_turningPIDController.calculate(m_turningEncoder.getDistance(), turn.getRadians());
+        final double turnOutput = m_turningPIDController.calculate(getTurnDistance(), turn.getRadians());
 
         System.out.println(String.format("Encoder/Desired/Output: %6.0f, %6.0f, %5.2f",
                 encoderRotation.getDegrees(), turn.getDegrees(), turnOutput));
 
-        m_turningMotor.set(ControlMode.PercentOutput, -turnOutput);
+        m_turningMotor.set(-turnOutput);
     }
     // --------------------------------------------------------------------------
 
@@ -205,17 +213,15 @@ public class SwerveModule {
      * @param turn  The input level -1.0 to 1.0 for the steer motor
      */
     public void rawInput(double drive, double turn) {
-        m_driveMotor.set(ControlMode.PercentOutput, drive);
-        m_turningMotor.set(ControlMode.PercentOutput, turn);
+        m_driveMotor.set(drive);
+        m_turningMotor.set(turn);
     }
 
     // --------------------------------------------------------------------------
 
-    /**
-     * Get the turning encoder
-     */
-    public Encoder getTurnEncoder() {
-        return m_turningEncoder;
+    @Override
+    public void initSendable(SendableBuilder builder) {
+        
     }
 
 }
