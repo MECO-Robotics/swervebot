@@ -4,10 +4,8 @@
 
 package frc.robot;
 
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
-import com.ctre.phoenix.sensors.WPI_CANCoder;
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -18,10 +16,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.AnalogGyro;
-import edu.wpi.first.wpilibj.CounterBase;
-import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.motorcontrol.MotorController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -64,21 +59,24 @@ public class Drivetrain extends SubsystemBase {
 
     // Rivet's convention is we start from the front right swerve module and go
     // clockwise from there
-    // for Encoder inputs and CAN IDs
-    private final Translation2d m_frontRightLocation = new Translation2d(kXOffset, -kYOffset);
-    private final Translation2d m_backRightLocation = new Translation2d(-kXOffset, -kYOffset);
-    private final Translation2d m_backLeftLocation = new Translation2d(-kXOffset, kYOffset);
-    private final Translation2d m_frontLeftLocation = new Translation2d(kXOffset, kYOffset);
+    private Translation2d[] m_translations = new Translation2d[] {
+            new Translation2d(kXOffset, -kYOffset),
+            new Translation2d(-kXOffset, -kYOffset),
+            new Translation2d(-kXOffset, kYOffset),
+            new Translation2d(kXOffset, kYOffset) };
+
+    private boolean[] m_inverted = new boolean[] { false, true, true, false };
+
+    private int NumModules = 4;
 
     // For convienence in testing and addressing a single module just using a number
     // 0 to 3
-    private final SwerveModule[] m_modules = new SwerveModule[4];
+    private final SwerveModule[] m_modules = new SwerveModule[NumModules];
 
     private final AnalogGyro m_gyro = new AnalogGyro(0);
 
     // Order of modules starts at front right and goes clockwise
-    private final SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(
-            m_frontRightLocation, m_backRightLocation, m_backLeftLocation, m_frontLeftLocation);
+    private final SwerveDriveKinematics m_kinematics;
 
     private final SwerveDriveOdometry m_odometry;
 
@@ -86,28 +84,46 @@ public class Drivetrain extends SubsystemBase {
 
         CommandScheduler.getInstance().registerSubsystem(this);
 
-        m_modules[0] = new SwerveModuleCANCoder(
-                createMotorController(0), createSteerController(4),
-                new WPI_CANCoder(0), new WPI_CANCoder(4), m_frontRightLocation);
-        m_modules[1] = new SwerveModuleCANCoder(
-                createMotorController(1), createSteerController(5),
-                new WPI_CANCoder(1), new WPI_CANCoder(5), m_backRightLocation);
-        m_modules[2] = new SwerveModuleCANCoder(
-                createMotorController(2), createSteerController(6),
-                new WPI_CANCoder(2), new WPI_CANCoder(6), m_backLeftLocation);
-        m_modules[3] = new SwerveModuleCANCoder(
-                createMotorController(3), createSteerController(7),
-                new WPI_CANCoder(3), new WPI_CANCoder(7), m_frontLeftLocation);
+        int goodModule = 0;
+        for (int i = 0; i < NumModules; i++) {
+            try {
 
-        SwerveModulePosition[] positions = new SwerveModulePosition[] {
-                m_modules[0].getModulePosition(),
-                m_modules[1].getModulePosition(),
-                m_modules[2].getModulePosition(),
-                m_modules[3].getModulePosition()
-        };
+                m_modules[goodModule] = new SwerveModule(
+                        // TODO: Assume if drive is inverted then steer is inverted?
+                        createMotorController(i, m_inverted[i]), // Drive motor
+                        new CANEncoder(i, m_inverted[i]), // Drive encoder
+                        createMotorController(i + 1, m_inverted[i + 1]), // Steer motor
+                        new CANEncoder(i + 1, m_inverted[i + 1]), // Steer encoder
+                        m_translations[goodModule]);
 
-        m_odometry = new SwerveDriveOdometry(m_kinematics, m_gyro.getRotation2d(),
-                positions);
+                // If there were no errors (which jump to catch below), then we get here
+                System.out.println("MODULE " + i + ": ONLINE");
+                goodModule++;
+
+            } catch (java.lang.RuntimeException error) {
+                System.out.println("MODULE " + i + ": OFFLINE     - " + error.getMessage());
+            }
+        }
+
+        // Now we know how many swerve modules we actually have functional, reset all
+        // the arrays to be this new length
+        NumModules = goodModule;
+
+        // The SwerveDriveOdometry class uses the SwerveModulePosition class to know
+        // where each module is. This class is simply an angle and distance from the
+        // center of the robot.
+        SwerveModulePosition[] positions = new SwerveModulePosition[NumModules];
+        Translation2d[] newTranslations = new Translation2d[NumModules];
+
+        for (int i = 0; i < NumModules; i++) {
+            positions[i] = m_modules[i].getModulePosition();
+            newTranslations[i] = m_translations[i];
+        }
+
+        m_translations = newTranslations;
+
+        m_kinematics = new SwerveDriveKinematics(m_translations);
+        m_odometry = new SwerveDriveOdometry(m_kinematics, m_gyro.getRotation2d(), positions);
 
         m_gyro.reset();
     }
@@ -118,16 +134,16 @@ public class Drivetrain extends SubsystemBase {
      * @param canID
      * @return
      */
-    private MotorController createMotorController(int canID) {
-        return new CANSparkMax(canID, MotorType.kBrushed);
-        // return new WPI_TalonSRX(turningEncoderChannelB);
-        // return new WPI_VictorSPX(turningEncoderChannelB);
-    }
+    private MotorController createMotorController(int canID, boolean inverted) {
+        CANSparkMax controller = new CANSparkMax(canID, MotorType.kBrushed);
+        controller.setIdleMode(IdleMode.kBrake);
+        controller.setInverted(inverted);
 
-    private MotorController createSteerController(int canID) {
-        return new CANSparkMax(canID, MotorType.kBrushed);
+        // Alaternative motor controller implementations:
         // return new WPI_TalonSRX(turningEncoderChannelB);
         // return new WPI_VictorSPX(turningEncoderChannelB);
+
+        return controller;
     }
 
     /**
@@ -137,8 +153,6 @@ public class Drivetrain extends SubsystemBase {
      * @param turnDegrees The angle in degrees, usually -90 to 90
      */
     public void turnModule(int module, double turnDegrees) {
-        System.out.println(String.format("Encoder: %5.1f, Level: %5.1f",
-                m_modules[module].getTurnDistance(), turnDegrees));
         m_modules[module].setDesiredTurn(Rotation2d.fromDegrees(turnDegrees));
     }
 
@@ -163,18 +177,11 @@ public class Drivetrain extends SubsystemBase {
 
         SwerveModuleState[] swerveModuleStates = m_kinematics.toSwerveModuleStates(chassisSpeeds);
 
-        System.out.println("Chassis speeds: " + chassisSpeeds);
-        System.out.println("Front right: " + swerveModuleStates[0]);
-        System.out.println("Back right: " + swerveModuleStates[1]);
-        System.out.println("Back left: " + swerveModuleStates[2]);
-        System.out.println("Front right: " + swerveModuleStates[3]);
-
         SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, kMaxSpeed);
 
-        m_modules[0].setDesiredState(swerveModuleStates[0]);
-        m_modules[1].setDesiredState(swerveModuleStates[1]);
-        m_modules[2].setDesiredState(swerveModuleStates[2]);
-        m_modules[3].setDesiredState(swerveModuleStates[3]);
+        for (int i = 0; i < NumModules; i++) {
+            m_modules[i].setDesiredState(swerveModuleStates[i]);
+        }
     }
 
     /** Updates the field relative position of the robot. */
@@ -188,13 +195,6 @@ public class Drivetrain extends SubsystemBase {
     // }
 
     public void control(int module, double drive, double rot) {
-
-        System.out.println(String.format("Module/Encoder/turn/drive, %d, %8.4f, %8.2f, %8.2f",
-                module,
-                m_modules[module].getTurnDistance(),
-                rot,
-                drive));
-
         m_modules[module].rawInput(drive, rot);
     }
 

@@ -46,10 +46,6 @@ public class Robot extends TimedRobot {
     @Override
     public void autonomousPeriodic() {
 
-        // Can't do autonomous right now because we don't have drive encoders
-
-        // driveWithJoystick(false);
-        // m_swerve.updateOdometry();
     }
 
     // --------------------------------------------------------------------------
@@ -87,7 +83,6 @@ public class Robot extends TimedRobot {
             }
         }
 
-        if(false){
 
         
         // controls for selecting which swerve module you are testing
@@ -143,7 +138,8 @@ public class Robot extends TimedRobot {
 
         // allows for control of the swerve modules
         m_driveTrain.control(module, drive, turn);
-    }
+
+
         // turn a module to a specific number of degrees
         // m_driveTrain.turnModule(module, turn);
 
