@@ -8,7 +8,7 @@ public interface IEncoder {
    *
    * @return The distance driven since the last reset
    */
-  double getDistance();
+  double getDistanceDegrees();
 
   /**
    * Get the current rate of the encoder. Units are distance per second as scaled by the value from
@@ -16,6 +16,6 @@ public interface IEncoder {
    *
    * @return The current rate of the encoder.
    */
-  double getRate();
+  double getRateDegreesPerSecond();
 
 }

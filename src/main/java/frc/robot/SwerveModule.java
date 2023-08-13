@@ -25,23 +25,91 @@ import edu.wpi.first.wpilibj.motorcontrol.MotorController;
  */
 public class SwerveModule implements Sendable {
 
-    private static final double kModuleMaxAngularVelocity = Drivetrain.kMaxAngularSpeed;
-    private static final double kModuleMaxAngularAcceleration = 2 * Math.PI; // radians per second squared
+    // ------------------------------------------------------------------------
+    // Swerve & Steer Constants
+
+    // // Wheel RPMs on the Swerve & Steer page are 800.
+    // public static final double kWheelRpms = 800;
+    // public static final double kWheelDiameter = 4.0 * 0.0254; // inches *
+    // meters/inch
+    // // Should be: <motor free speed rpms> / 60 * <wheel diam> * PI
+
+    // // Theoretical max speed is about 4.3 m/s, but when running full throttle,
+    // // we're seeing a max speed of 700 RPMs, so it looks more like 3.7 m/s
+    // // Set an initial value that is safer - no bumpers yet
+    // public static final double kMaxSpeed = 2.0;
+
+    // // Swerve and Steer has a THEORETICAL max Turn RPM of 90
+    // // 90 / 60 * 2 * PI = 9.4 Radians/sec
+    // // We'll start with a max speed much smaller - 2 rads/sec
+    // public static final double kMaxAngularSpeed = 2.0;
+
+    // ------------------------------------------------------------------------
+    // SDS MK4i Constants
+    // https://www.swervedrivespecialties.com/products/mk4i-swerve-module
+
+    // Steer motor ratio is 150/7 (21.4) revolutions of the motor to 1 revolution of
+    // the steer direction.
+    private static final double kSteerGearRatio = 21.42857142857143;
+
+    // Drive ratio is 8.14 revolutions of the motor to 1 revolution of the drive.
+    // This is the slowest of the 3 gearing options available on the MK4i
+    // TODO: Confirm we're using the "L1 - Standard" Drive gear ratios
+    private static final double kDriveGearRatio = 8.14;
+
+    // Wheels are 4" OD
+    private static final double kWheelDiameterMeters = 0.1016;
+
+    // ------------------------------------------------------------------------
+    // Mini CIM Constants
+    // https://motors.vex.com/vexpro-motors/mini-cim-motor
+
+    // Free speed at 12v: 5840rpms
+    private static final double kMaxRpm = 5000;
+
+    // ------------------------------------------------------------------------
+
+    // Max angular velocity converted from RPMs to deg/s
+    public static final double kSteerMaxAngularVelocity = (kMaxRpm / kSteerGearRatio) * 360.0 / 60.0;
+
+    // Assume 0 to max RPM in 0.5 seconds, so ...
+    private static final double kSteerMaxAngularAcceleration = kSteerMaxAngularVelocity / 0.5;
+
+    private static final double kDriveMaxAngularVelocity = (kMaxRpm / kDriveGearRatio) * 360.0 / 60.0;
+
+    // Wheel circumference in meters
+    private static final double kWheelCircumference = kWheelDiameterMeters * 3.1415;
+
+    // Max forward speed, in m/s
+    public static final double kDriveMaxForwardSpeed = (kMaxRpm / kDriveGearRatio) * kWheelCircumference / 60.0;
+
+    // Conversion factor to multiply deg/s to get m/s
+    public static final double kDegreesPerSecondToMetersPerSecond = kWheelCircumference / 360.0;
 
     private final Translation2d m_location;
     private final MotorController m_driveMotor; // Either CANSparkMax or WPI_TalonSRX implementation
     private final MotorController m_turningMotor;
+    private final IEncoder m_driveEncoder;
+    private final IEncoder m_steerEncoder;
 
     // Gains are for example purposes only - must be determined for your own robot!
-    private final PIDController m_drivePIDController = new PIDController(1, 0, 0);
+    // This PID controller turns m/s into motor input (-1 .. 1)
+    //
+    // Initial kP: Using max forward velocity of 3.27m/s, Initial factor would be
+    // 1/32.7 = 0.306
+    private final PIDController m_drivePIDController = new PIDController(0.306, 0, 0);
 
     // Gains are for example purposes only - must be determined for your own robot!
+    // Set points and constraints are in degrees
+    //
+    // Initial kP: Using max angular velocity of 1400 deg/sec, initial factor would
+    // be 1/1400 = 1.74e-4
     private final ProfiledPIDController m_turningPIDController = new ProfiledPIDController(
-            1,
+            1.74e-4,
             0,
             0,
             new TrapezoidProfile.Constraints(
-                    kModuleMaxAngularVelocity, kModuleMaxAngularAcceleration));
+                    kSteerMaxAngularVelocity, kSteerMaxAngularAcceleration));
 
     // Gains are for example purposes only - must be determined for your own robot!
     private final SimpleMotorFeedforward m_driveFeedforward = new SimpleMotorFeedforward(1, 3);
@@ -50,8 +118,9 @@ public class SwerveModule implements Sendable {
     // ks is in volts. Original value: 1
     // kv is volts * seconds / radians. Original value: 0.5
     private final SimpleMotorFeedforward m_turnFeedforward = new SimpleMotorFeedforward(1, 0.1);
-    private IEncoder m_driveEncoder;
-    private IEncoder m_steerEncoder;
+
+    // The steer angle of the module from the last tick
+    Rotation2d lastAngle = Rotation2d.fromDegrees(0);
 
     // --------------------------------------------------------------------------
 
@@ -93,12 +162,11 @@ public class SwerveModule implements Sendable {
      * @return The current state of the module.
      */
     public SwerveModuleState getState() {
-        return new SwerveModuleState(m_driveEncoder.getRate(), new Rotation2d(m_steerEncoder.getDistance()));
+        return new SwerveModuleState(m_driveEncoder.getRateDegreesPerSecond(),
+                new Rotation2d(m_steerEncoder.getDistanceDegrees()));
     }
 
     // --------------------------------------------------------------------------
-
-    Rotation2d lastAngle = Rotation2d.fromDegrees(0);
 
     /**
      * Sets the desired state for the module.
@@ -111,59 +179,57 @@ public class SwerveModule implements Sendable {
         // Optimize the reference state to avoid spinning further than 90 degrees
         //
         SwerveModuleState state = SwerveModuleState.optimize(desiredState,
-                new Rotation2d(m_steerEncoder.getDistance()));
+                new Rotation2d(m_steerEncoder.getDistanceDegrees()));
 
         // ----------------------------------------------------------------
-        // Prevent jitter by checking if the drive speed is less than 10%.
+        // Prevent jitter by checking if the drive speed is less than 1%.
         //
-        if (Math.abs(state.speedMetersPerSecond) <= (Drivetrain.kMaxSpeed * 0.01)) {
+        if (Math.abs(state.speedMetersPerSecond) <= (kDriveMaxForwardSpeed * 0.01)) {
             state.angle = lastAngle;
         } else {
             lastAngle = state.angle;
         }
 
-        // Calculate the drive output from the drive PID controller.
-        // This applies PID control, but also effectively changes m/s into % output
-        final double driveOutput = m_drivePIDController.calculate(m_driveEncoder.getRate(),
-                state.speedMetersPerSecond);
-
-        // Need to find what the max revs and gear ratio result in max speed
-
-        final double driveFeedforward = m_driveFeedforward.calculate(state.speedMetersPerSecond);
-
-        // From
-        // https://github.com/msdifede/FRCSwerve2022/blob/ed5e07e12625b80e12fc02ac8e514a1bc530df18/src/main/java/frc/robot/SwerveModule.java
-        // double angle = (Math.abs(desiredState.speedMetersPerSecond) <=
-        // (Constants.Swerve.maxSpeed * 0.01)) ? lastAngle
-        // : desiredState.angle.getDegrees(); // Prevent rotating module if speed is
-        // less
-        // then 1%. Prevents Jittering.
-
-        // Calculate the turning motor output from the turning PID controller.
-        double turnOutput = m_turningPIDController.calculate(m_steerEncoder.getDistance(),
-                state.angle.getRadians());
-
-        // Use the desired velocity (rad/s) and run through a feedfoward controller,
-        // which basically increases the velocity by 50%
-        turnOutput = turnOutput +
-                m_turnFeedforward.calculate(m_turningPIDController.getSetpoint().velocity);
-
-        m_driveMotor.set(driveOutput + driveFeedforward);
-
-        m_turningMotor.set(-turnOutput);
+        setDesiredTurn(state.angle);
+        setDesiredDrive(state.speedMetersPerSecond);
     }
 
     // --------------------------------------------------------------------------
 
+    /**
+     * Spin the drive motor to achieve a desired speed
+     * @param speedMps The forward speed, in meters per second
+     */
+    public void setDesiredDrive(double speedMps) {
+
+        // Calculate the drive output from the drive PID controller.
+        // This applies PID control, but also effectively changes m/s into % output
+        final double driveOutput = m_drivePIDController.calculate(
+                m_driveEncoder.getRateDegreesPerSecond() * kDegreesPerSecondToMetersPerSecond,
+                speedMps);
+
+        final double driveFeedForward = m_driveFeedforward.calculate(speedMps);
+
+        m_driveMotor.set(driveOutput + driveFeedForward);
+    }
+    // --------------------------------------------------------------------------
+
+    /**
+     * Steer the module to an indicated position.
+     * 
+     * @param turn The desired rotation (-180 to 180)
+     */
     public void setDesiredTurn(Rotation2d turn) {
-        final Rotation2d encoderRotation = new Rotation2d(m_steerEncoder.getDistance());
 
-        final double turnOutput = m_turningPIDController.calculate(m_steerEncoder.getDistance(), turn.getRadians());
+        // Calculate the turning motor output from the turning PID controller.
+        final double turnOutput = m_turningPIDController.calculate(m_steerEncoder.getDistanceDegrees(),
+                turn.getDegrees());
 
-        System.out.println(String.format("Encoder/Desired/Output: %6.0f, %6.0f, %5.2f",
-                encoderRotation.getDegrees(), turn.getDegrees(), turnOutput));
+        // Use the desired velocity (deg/s) and run through a feedfoward controller,
+        // which basically increases the velocity by 50%
+        final double turnFeedForward = m_turnFeedforward.calculate(m_turningPIDController.getSetpoint().velocity);
 
-        m_turningMotor.set(-turnOutput);
+        m_turningMotor.set(turnOutput + turnFeedForward);
     }
 
     // --------------------------------------------------------------------------
@@ -183,7 +249,15 @@ public class SwerveModule implements Sendable {
 
     @Override
     public void initSendable(SendableBuilder builder) {
-        // TODO Send a bunch of stuff to the shuffleboard
+        // TODO Send a bunch of stuff to the shuffleboard:
+
+        // Text entry to turn to an angle in degrees, -180 to +180
+        // Text entry to drive the motor to a specific speed, in m/s
+        // Drive PID & FF controller with ability to change constants
+        // Steer PID & FF controller with ability to change constants
+        // Plot of Drive control  (-1 to 1) to speed (-15 mps to +15 mps)
+        // Plot of Turn control (-1 to 1) to angle (-180 to 180)
+        // Inverted flag
     }
 
 }

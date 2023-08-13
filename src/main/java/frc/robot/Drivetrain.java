@@ -23,20 +23,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 /** Represents a swerve drive style drivetrain. */
 public class Drivetrain extends SubsystemBase {
 
-    // Wheel RPMs on the Swerve & Steer page are 800.
-    public static final double kWheelRpms = 800;
-    public static final double kWheelDiameter = 4.0 * 0.0254; // inches * meters/inch
-    // Should be: <motor free speed rpms> / 60 * <wheel diam> * PI
-
-    // Theoretical max speed is about 4.3 m/s, but when running full throttle,
-    // we're seeing a max speed of 700 RPMs, so it looks more like 3.7 m/s
-    // Set an initial value that is safer - no bumpers yet
-    public static final double kMaxSpeed = 2.0;
-
-    // Swerve and Steer has a THEORETICAL max Turn RPM of 90
-    // 90 / 60 * 2 * PI = 9.4 Radians/sec
-    // We'll start with a max speed much smaller - 2 rads/sec
-    public static final double kMaxAngularSpeed = 2.0;
 
     // Offset lengths from the center to the wheels
     // Robot orientation is x forward, y left, with swerve modules numbered
@@ -177,7 +163,7 @@ public class Drivetrain extends SubsystemBase {
 
         SwerveModuleState[] swerveModuleStates = m_kinematics.toSwerveModuleStates(chassisSpeeds);
 
-        SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, kMaxSpeed);
+        SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, SwerveModule.kDriveMaxForwardSpeed);
 
         for (int i = 0; i < NumModules; i++) {
             m_modules[i].setDesiredState(swerveModuleStates[i]);

@@ -11,12 +11,12 @@ public class QuadEncoder implements IEncoder {
     }
 
     @Override
-    public double getDistance() {
+    public double getDistanceDegrees() {
         return m_encoder.getDistance();
     }
 
     @Override
-    public double getRate() {
+    public double getRateDegreesPerSecond() {
         return m_encoder.getRate();
     }
     

@@ -14,12 +14,12 @@ public class CANEncoder implements IEncoder {
     }
 
     @Override
-    public double getDistance() {
+    public double getDistanceDegrees() {
         return m_canCoder.getPosition();
     }
 
     @Override
-    public double getRate() {
+    public double getRateDegreesPerSecond() {
         return m_canCoder.getVelocity();
     }
     
