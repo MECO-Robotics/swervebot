@@ -15,6 +15,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.motorcontrol.MotorController;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -22,7 +23,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /** Represents a swerve drive style drivetrain. */
 public class Drivetrain extends SubsystemBase {
-
 
     // Offset lengths from the center to the wheels
     // Robot orientation is x forward, y left, with swerve modules numbered
@@ -65,6 +65,8 @@ public class Drivetrain extends SubsystemBase {
     private final SwerveDriveKinematics m_kinematics;
 
     private final SwerveDriveOdometry m_odometry;
+
+    // -------------------------------------------------------------------
 
     public Drivetrain() {
 
@@ -109,10 +111,24 @@ public class Drivetrain extends SubsystemBase {
         m_translations = newTranslations;
 
         m_kinematics = new SwerveDriveKinematics(m_translations);
-        m_odometry = new SwerveDriveOdometry(m_kinematics, m_gyro.getRotation2d(), positions);
+        m_odometry = new SwerveDriveOdometry(m_kinematics, m_gyro.getRotation2d(), getModulePositions());
 
         m_gyro.reset();
     }
+
+    // -------------------------------------------------------------------
+
+    public SwerveModulePosition[] getModulePositions() {
+        SwerveModulePosition[] positions = new SwerveModulePosition[NumModules];
+
+        for (int i = 0; i < NumModules; i++) {
+            positions[i] = m_modules[i].getModulePosition();
+        }
+
+        return positions;
+    }
+
+    // -------------------------------------------------------------------
 
     /**
      * Create the right kind of motor controller to match the hardware
@@ -132,6 +148,8 @@ public class Drivetrain extends SubsystemBase {
         return controller;
     }
 
+    // -------------------------------------------------------------------
+
     /**
      * Turn a module to a specific angle.
      * 
@@ -141,6 +159,8 @@ public class Drivetrain extends SubsystemBase {
     public void turnModule(int module, double turnDegrees) {
         m_modules[module].setDesiredTurn(Rotation2d.fromDegrees(turnDegrees));
     }
+
+    // -------------------------------------------------------------------
 
     /**
      * Method to drive the robot using joystick info.
@@ -170,15 +190,14 @@ public class Drivetrain extends SubsystemBase {
         }
     }
 
+    // -------------------------------------------------------------------
+
     /** Updates the field relative position of the robot. */
-    // public void updateOdometry() {
-    // m_odometry.update(
-    // m_gyro.getRotation2d(),
-    // m_frontLeft.getState(),
-    // m_frontRight.getState(),
-    // m_backLeft.getState(),
-    // m_backRight.getState());
-    // }
+    public void updateOdometry() {
+        m_odometry.update(m_gyro.getRotation2d(), getModulePositions());
+    }
+
+    // -------------------------------------------------------------------
 
     public void control(int module, double drive, double rot) {
         m_modules[module].rawInput(drive, rot);
@@ -190,4 +209,10 @@ public class Drivetrain extends SubsystemBase {
     public void periodic() {
     }
 
+    // -------------------------------------------------------------------
+
+    @Override
+    public void initSendable(SendableBuilder builder) {
+
+    }
 }

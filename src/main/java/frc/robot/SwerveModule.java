@@ -75,16 +75,14 @@ public class SwerveModule implements Sendable {
     // Assume 0 to max RPM in 0.5 seconds, so ...
     private static final double kSteerMaxAngularAcceleration = kSteerMaxAngularVelocity / 0.5;
 
-    private static final double kDriveMaxAngularVelocity = (kMaxRpm / kDriveGearRatio) * 360.0 / 60.0;
-
     // Wheel circumference in meters
     private static final double kWheelCircumference = kWheelDiameterMeters * 3.1415;
 
     // Max forward speed, in m/s
     public static final double kDriveMaxForwardSpeed = (kMaxRpm / kDriveGearRatio) * kWheelCircumference / 60.0;
 
-    // Conversion factor to multiply deg/s to get m/s
-    public static final double kDegreesPerSecondToMetersPerSecond = kWheelCircumference / 360.0;
+    // Conversion factor to multiply degrees to get meters.
+    public static final double kDegreesToMeters = kWheelCircumference / 360.0;
 
     private final Translation2d m_location;
     private final MotorController m_driveMotor; // Either CANSparkMax or WPI_TalonSRX implementation
@@ -151,7 +149,9 @@ public class SwerveModule implements Sendable {
     // --------------------------------------------------------------------------
 
     SwerveModulePosition getModulePosition() {
-        return new SwerveModulePosition(m_location.getDistance(new Translation2d()), m_location.getAngle());
+        return new SwerveModulePosition(
+                m_driveEncoder.getDistanceDegrees() * kDegreesToMeters,
+                Rotation2d.fromDegrees(m_steerEncoder.getDistanceDegrees()));
     }
 
     // --------------------------------------------------------------------------
@@ -198,6 +198,7 @@ public class SwerveModule implements Sendable {
 
     /**
      * Spin the drive motor to achieve a desired speed
+     * 
      * @param speedMps The forward speed, in meters per second
      */
     public void setDesiredDrive(double speedMps) {
@@ -205,7 +206,7 @@ public class SwerveModule implements Sendable {
         // Calculate the drive output from the drive PID controller.
         // This applies PID control, but also effectively changes m/s into % output
         final double driveOutput = m_drivePIDController.calculate(
-                m_driveEncoder.getRateDegreesPerSecond() * kDegreesPerSecondToMetersPerSecond,
+                m_driveEncoder.getRateDegreesPerSecond() * kDegreesToMeters,
                 speedMps);
 
         final double driveFeedForward = m_driveFeedforward.calculate(speedMps);
@@ -249,15 +250,6 @@ public class SwerveModule implements Sendable {
 
     @Override
     public void initSendable(SendableBuilder builder) {
-        // TODO Send a bunch of stuff to the shuffleboard:
-
-        // Text entry to turn to an angle in degrees, -180 to +180
-        // Text entry to drive the motor to a specific speed, in m/s
-        // Drive PID & FF controller with ability to change constants
-        // Steer PID & FF controller with ability to change constants
-        // Plot of Drive control  (-1 to 1) to speed (-15 mps to +15 mps)
-        // Plot of Turn control (-1 to 1) to angle (-180 to 180)
-        // Inverted flag
     }
 
 }

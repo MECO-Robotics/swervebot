@@ -8,7 +8,6 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class Robot extends TimedRobot {
@@ -16,8 +15,6 @@ public class Robot extends TimedRobot {
     private final XboxController m_controller = new XboxController(0);
 
     private final Drivetrain m_driveTrain = new Drivetrain();
-
-    private final TestPatternCommand m_TestPatternCommand = new TestPatternCommand(m_driveTrain);
 
     // Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
     private final SlewRateLimiter m_xspeedLimiter = new SlewRateLimiter(3);
