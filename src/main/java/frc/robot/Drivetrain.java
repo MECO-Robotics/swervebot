@@ -53,18 +53,18 @@ public class Drivetrain extends SubsystemBase {
 
     private boolean[] m_inverted = new boolean[] { false, true, true, false };
 
-    private int NumModules = 4;
+    public int m_numModules = 4;
 
     // For convienence in testing and addressing a single module just using a number
     // 0 to 3
-    private final SwerveModule[] m_modules = new SwerveModule[NumModules];
+    public final SwerveModule[] m_modules = new SwerveModule[m_numModules];
 
-    private final AnalogGyro m_gyro = new AnalogGyro(0);
+    public final AnalogGyro m_gyro = new AnalogGyro(0);
 
     // Order of modules starts at front right and goes clockwise
     private final SwerveDriveKinematics m_kinematics;
 
-    private final SwerveDriveOdometry m_odometry;
+    public final SwerveDriveOdometry m_odometry;
 
     // -------------------------------------------------------------------
 
@@ -73,7 +73,7 @@ public class Drivetrain extends SubsystemBase {
         CommandScheduler.getInstance().registerSubsystem(this);
 
         int goodModule = 0;
-        for (int i = 0; i < NumModules; i++) {
+        for (int i = 0; i < m_numModules; i++) {
             try {
 
                 m_modules[goodModule] = new SwerveModule(
@@ -95,15 +95,15 @@ public class Drivetrain extends SubsystemBase {
 
         // Now we know how many swerve modules we actually have functional, reset all
         // the arrays to be this new length
-        NumModules = goodModule;
+        m_numModules = goodModule;
 
         // The SwerveDriveOdometry class uses the SwerveModulePosition class to know
         // where each module is. This class is simply an angle and distance from the
         // center of the robot.
-        SwerveModulePosition[] positions = new SwerveModulePosition[NumModules];
-        Translation2d[] newTranslations = new Translation2d[NumModules];
+        SwerveModulePosition[] positions = new SwerveModulePosition[m_numModules];
+        Translation2d[] newTranslations = new Translation2d[m_numModules];
 
-        for (int i = 0; i < NumModules; i++) {
+        for (int i = 0; i < m_numModules; i++) {
             positions[i] = m_modules[i].getModulePosition();
             newTranslations[i] = m_translations[i];
         }
@@ -119,9 +119,9 @@ public class Drivetrain extends SubsystemBase {
     // -------------------------------------------------------------------
 
     public SwerveModulePosition[] getModulePositions() {
-        SwerveModulePosition[] positions = new SwerveModulePosition[NumModules];
+        SwerveModulePosition[] positions = new SwerveModulePosition[m_numModules];
 
-        for (int i = 0; i < NumModules; i++) {
+        for (int i = 0; i < m_numModules; i++) {
             positions[i] = m_modules[i].getModulePosition();
         }
 
@@ -185,7 +185,7 @@ public class Drivetrain extends SubsystemBase {
 
         SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, SwerveModule.kDriveMaxForwardSpeed);
 
-        for (int i = 0; i < NumModules; i++) {
+        for (int i = 0; i < m_numModules; i++) {
             m_modules[i].setDesiredState(swerveModuleStates[i]);
         }
     }
@@ -213,6 +213,13 @@ public class Drivetrain extends SubsystemBase {
 
     @Override
     public void initSendable(SendableBuilder builder) {
+
+    }
+
+    // -------------------------------------------------------------------
+
+    @Override
+    public void simulationPeriodic() {
 
     }
 }

@@ -85,24 +85,24 @@ public class SwerveModule implements Sendable {
     public static final double kDegreesToMeters = kWheelCircumference / 360.0;
 
     private final Translation2d m_location;
-    private final MotorController m_driveMotor; // Either CANSparkMax or WPI_TalonSRX implementation
-    private final MotorController m_turningMotor;
-    private final IEncoder m_driveEncoder;
-    private final IEncoder m_steerEncoder;
+    public final MotorController m_driveMotor; // Either CANSparkMax or WPI_TalonSRX implementation
+    public final MotorController m_turningMotor;
+    public final IEncoder m_driveEncoder;
+    public final IEncoder m_steerEncoder;
 
     // Gains are for example purposes only - must be determined for your own robot!
     // This PID controller turns m/s into motor input (-1 .. 1)
     //
     // Initial kP: Using max forward velocity of 3.27m/s, Initial factor would be
     // 1/32.7 = 0.306
-    private final PIDController m_drivePIDController = new PIDController(0.306, 0, 0);
+    public final PIDController m_drivePIDController = new PIDController(0.306, 0, 0);
 
     // Gains are for example purposes only - must be determined for your own robot!
     // Set points and constraints are in degrees
     //
     // Initial kP: Using max angular velocity of 1400 deg/sec, initial factor would
     // be 1/1400 = 1.74e-4
-    private final ProfiledPIDController m_turningPIDController = new ProfiledPIDController(
+    public final ProfiledPIDController m_turningPIDController = new ProfiledPIDController(
             1.74e-4,
             0,
             0,
@@ -138,6 +138,9 @@ public class SwerveModule implements Sendable {
         m_driveEncoder = driveEncoder;
         m_steerEncoder = steerEncoder;
         m_location = location;
+
+        // Encoder is configured to report position from -180 to 180.
+        m_turningPIDController.enableContinuousInput(-180, 180);
     }
 
     // --------------------------------------------------------------------------

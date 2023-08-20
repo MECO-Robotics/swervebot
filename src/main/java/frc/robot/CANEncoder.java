@@ -10,7 +10,7 @@ public class CANEncoder implements IEncoder {
 
     public CANEncoder(int deviceID, boolean inverted) {
         m_canCoder = new WPI_CANCoder(deviceID);
-        m_canCoder.configAbsoluteSensorRange(AbsoluteSensorRange.Unsigned_0_to_360);
+        m_canCoder.configAbsoluteSensorRange(AbsoluteSensorRange.Signed_PlusMinus180);
     }
 
     @Override

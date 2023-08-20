@@ -7,7 +7,9 @@ package frc.robot;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class Robot extends TimedRobot {
@@ -15,6 +17,8 @@ public class Robot extends TimedRobot {
     private final XboxController m_controller = new XboxController(0);
 
     private final Drivetrain m_driveTrain = new Drivetrain();
+
+    private final UserInterface m_userInterface = new UserInterface(m_driveTrain);
 
     // Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
     private final SlewRateLimiter m_xspeedLimiter = new SlewRateLimiter(3);
@@ -68,98 +72,95 @@ public class Robot extends TimedRobot {
     @Override
     public void testPeriodic() {
 
-        final double kTurnIncrement = .05;
+        // final double kTurnIncrement = .05;
 
-        if (pressTimer > 0) {
-            if (System.currentTimeMillis() < (pressTimer + 500)) {
-                System.out.println("Ignoring input ...");
-                return;
-            } else {
-                System.out.println("resuming input ...");
-                pressTimer = 0;
-            }
-        }
+        // if (pressTimer > 0) {
+        // if (System.currentTimeMillis() < (pressTimer + 500)) {
+        // System.out.println("Ignoring input ...");
+        // return;
+        // } else {
+        // System.out.println("resuming input ...");
+        // pressTimer = 0;
+        // }
+        // }
 
+        // // controls for selecting which swerve module you are testing
+        // if (m_controller.getYButton()) {
+        // drive = 0;
+        // turn = 0;
+        // m_driveTrain.control(module, drive, turn);
+        // module = 0;
+        // }
 
-        
-        // controls for selecting which swerve module you are testing
-        if (m_controller.getYButton()) {
-            drive = 0;
-            turn = 0;
-            m_driveTrain.control(module, drive, turn);
-            module = 0;
-        }
+        // if (m_controller.getBButton()) {
+        // drive = 0;
+        // turn = 0;
+        // m_driveTrain.control(module, drive, turn);
+        // module = 1;
+        // }
 
-        if (m_controller.getBButton()) {
-            drive = 0;
-            turn = 0;
-            m_driveTrain.control(module, drive, turn);
-            module = 1;
-        }
+        // if (m_controller.getAButton()) {
+        // drive = 0;
+        // turn = 0;
+        // m_driveTrain.control(module, drive, turn);
+        // module = 2;
+        // }
 
-        if (m_controller.getAButton()) {
-            drive = 0;
-            turn = 0;
-            m_driveTrain.control(module, drive, turn);
-            module = 2;
-        }
+        // if (m_controller.getXButton()) {
+        // drive = 0;
+        // turn = 0;
+        // m_driveTrain.control(module, drive, turn);
+        // module = 3;
+        // }
 
-        if (m_controller.getXButton()) {
-            drive = 0;
-            turn = 0;
-            m_driveTrain.control(module, drive, turn);
-            module = 3;
-        }
+        // // controls for increasing speed and turn
 
-        // controls for increasing speed and turn
+        // if (m_controller.getPOV() == 0) {
+        // drive = drive + 0.1;
+        // pressTimer = System.currentTimeMillis();
+        // }
 
-        if (m_controller.getPOV() == 0) {
-            drive = drive + 0.1;
-            pressTimer = System.currentTimeMillis();
-        }
+        // if (m_controller.getPOV() == 90) {
+        // turn = turn + kTurnIncrement;
+        // pressTimer = System.currentTimeMillis();
+        // }
 
-        if (m_controller.getPOV() == 90) {
-            turn = turn + kTurnIncrement;
-            pressTimer = System.currentTimeMillis();
-        }
+        // if (m_controller.getPOV() == 180) {
+        // drive = drive - 0.1;
+        // pressTimer = System.currentTimeMillis();
+        // }
 
-        if (m_controller.getPOV() == 180) {
-            drive = drive - 0.1;
-            pressTimer = System.currentTimeMillis();
-        }
+        // if (m_controller.getPOV() == 270) {
+        // turn = turn - kTurnIncrement;
+        // pressTimer = System.currentTimeMillis();
+        // }
 
-        if (m_controller.getPOV() == 270) {
-            turn = turn - kTurnIncrement;
-            pressTimer = System.currentTimeMillis();
-        }
+        // // allows for control of the swerve modules
+        // m_driveTrain.control(module, drive, turn);
 
-        // allows for control of the swerve modules
-        m_driveTrain.control(module, drive, turn);
+        // // turn a module to a specific number of degrees
+        // // m_driveTrain.turnModule(module, turn);
 
+        // //
+        // // TEST PATTERN COMMAND
+        // //
 
-        // turn a module to a specific number of degrees
-        // m_driveTrain.turnModule(module, turn);
+        // if (m_controller.getRightBumperPressed()) {
+        // System.out.println("Turning RIGHT");
+        // pressTimer = System.currentTimeMillis();
+        // m_allAngle += 180;
+        // }
 
-        //
-        // TEST PATTERN COMMAND
-        //
+        // if (m_controller.getLeftBumperPressed()) {
+        // System.out.println("Turning LEFT");
+        // pressTimer = System.currentTimeMillis();
+        // m_allAngle -= 180;
+        // }
 
-        if (m_controller.getRightBumperPressed()) {
-            System.out.println("Turning RIGHT");
-            pressTimer = System.currentTimeMillis();
-            m_allAngle += 180;
-        }
-
-        if (m_controller.getLeftBumperPressed()) {
-            System.out.println("Turning LEFT");
-            pressTimer = System.currentTimeMillis();
-            m_allAngle -= 180;
-        }
-
-        m_driveTrain.turnModule(0, m_allAngle);
-        m_driveTrain.turnModule(1, m_allAngle);
-        m_driveTrain.turnModule(2, m_allAngle);
-        m_driveTrain.turnModule(3, m_allAngle);
+        // m_driveTrain.turnModule(0, m_allAngle);
+        // m_driveTrain.turnModule(1, m_allAngle);
+        // m_driveTrain.turnModule(2, m_allAngle);
+        // m_driveTrain.turnModule(3, m_allAngle);
 
     }
 
@@ -195,7 +196,7 @@ public class Robot extends TimedRobot {
         // return positive values when you pull to the right by default.
         final var ySpeed = -m_yspeedLimiter.calculate(MathUtil.applyDeadband(m_controller.getLeftX(), 0.02))
                 * SwerveModule.kDriveMaxForwardSpeed;
-                ;
+        ;
 
         // Get the rate of angular rotation. We are inverting this because we want a
         // positive value when we pull to the left (remember, CCW is positive in
@@ -208,7 +209,12 @@ public class Robot extends TimedRobot {
     }
 
     // --------------------------------------------------------------------------
-    // Robot Periodic - called regardless of mode
+    // Robot - called regardless of mode
+
+    @Override
+    public void robotInit() {
+
+    }
 
     @Override
     public void robotPeriodic() {
@@ -216,6 +222,8 @@ public class Robot extends TimedRobot {
         // Regardless of the mode (Autonomous, Teleop, Test, Practice, Disabled) we need
         // to run periodic() on all the registered subsystems and scheduled commands
         CommandScheduler.getInstance().run();
+
+        m_userInterface.periodic();
     }
 
     // --------------------------------------------------------------------------
@@ -232,4 +240,19 @@ public class Robot extends TimedRobot {
     public void disabledPeriodic() {
     }
 
+    // --------------------------------------------------------------------------
+    // Simulation
+
+    double getSimValue(){
+        return (int)Timer.getFPGATimestamp() % 50;
+    }
+    @Override
+    public void simulationInit() {
+        Shuffleboard.getTab("SIM DEMO").addDouble("X", this::getSimValue);
+    }
+
+    @Override
+    public void simulationPeriodic() {
+        
+    }
 }
